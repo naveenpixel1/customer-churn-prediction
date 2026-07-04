@@ -19,8 +19,10 @@ st.set_page_config(
 )
 
 # Constants
-MODEL_DIR = "models"
-EVAL_DIR = os.path.join("reports", "evaluation")
+# Resolve paths dynamically relative to this script's directory (app/main.py)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+EVAL_DIR = os.path.join(BASE_DIR, "reports", "evaluation")
 
 # Inject premium visual layout styles (Clean sans-serif fonts, shadows, borders)
 st.markdown(
