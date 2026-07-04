@@ -21,10 +21,12 @@ ENV/
 Thumbs.db
 
 # Machine Learning specific ignores
-# Ignore datasets and models to keep the repository lightweight, but keep gitkeep files to track directories
+# Ignore datasets to keep the repository lightweight, but keep gitkeep and pkl models
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
 models/*
 !models/.gitkeep
+!models/*.pkl
+
