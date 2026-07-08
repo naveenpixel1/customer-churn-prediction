@@ -13,6 +13,7 @@ if current_dir not in sys.path:
 
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from app.components.styles import inject_premium_styles
 from app.components.cards import render_insight_card
 from app.services.analytics_service import AnalyticsService
@@ -104,6 +105,68 @@ with col2:
         f"while automatic billing channels (Credit Card / Bank Transfer) show a low <strong>{autopay_churn:.1%}</strong> churn rate.",
         "danger"
     )
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.subheader("📊 Visualizing Key Churn Drivers")
+
+chart_col1, chart_col2 = st.columns(2)
+
+with chart_col1:
+    with st.container(border=True):
+        st.markdown("<h4 style='margin-top:0; color:#FFFFFF;'>📝 Churn Risk by Contract Type</h4>", unsafe_allow_html=True)
+        # Calculate risk rates
+        contract_order = ["Month-to-month", "One year", "Two year"]
+        rates = [df[df['Contract'] == c]['Churn'].value_counts(normalize=True).get('Yes', 0.0) * 100 for c in contract_order]
+        fig_c = go.Figure(go.Bar(
+            x=rates,
+            y=contract_order,
+            orientation='h',
+            marker=dict(
+                color=['#FF6B6B', '#FFB347', '#00D4AA'],
+                line=dict(color='rgba(255,255,255,0.05)', width=1)
+            )
+        ))
+        fig_c.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=150,
+            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(showgrid=False)
+        )
+        st.plotly_chart(fig_c, use_container_width=True, config={"displayModeBar": False})
+
+with chart_col2:
+    with st.container(border=True):
+        st.markdown("<h4 style='margin-top:0; color:#FFFFFF;'>💳 Churn Risk by Payment Channel</h4>", unsafe_allow_html=True)
+        pm_methods = ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"]
+        rates_pm = [df[df['PaymentMethod'] == p]['Churn'].value_counts(normalize=True).get('Yes', 0.0) * 100 for p in pm_methods]
+        
+        # Sort values
+        sorted_pm = sorted(zip(pm_methods, rates_pm), key=lambda x: x[1])
+        pm_y = [x[0] for x in sorted_pm]
+        pm_x = [x[1] for x in sorted_pm]
+        
+        fig_p = go.Figure(go.Bar(
+            x=pm_x,
+            y=pm_y,
+            orientation='h',
+            marker=dict(
+                color=['#00D4AA', '#00D4AA', '#FFB347', '#FF6B6B'],
+                line=dict(color='rgba(255,255,255,0.05)', width=1)
+            )
+        ))
+        fig_p.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=150,
+            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(showgrid=False)
+        )
+        st.plotly_chart(fig_p, use_container_width=True, config={"displayModeBar": False})
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("💡 Strategic Action Playbooks")
