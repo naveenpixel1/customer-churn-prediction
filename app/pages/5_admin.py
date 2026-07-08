@@ -27,8 +27,8 @@ inject_premium_styles()
 st.markdown("<h1 class='glowing-title gradient-text'>🔐 Admin Console</h1>", unsafe_allow_html=True)
 
 # Authentication configurations from env (fallback values provided for portfolio showcase)
-ENV_USER = os.getenv("ADMIN_USER", "admin")
-ENV_PASS = os.getenv("ADMIN_PASS", "churn2026")
+ENV_USER = os.getenv("ADMIN_USER", "naveen")
+ENV_PASS = os.getenv("ADMIN_PASS", "naveen@0104")
 
 # Session state authentication logic
 if 'admin_authenticated' not in st.session_state:
