@@ -1,8 +1,10 @@
 import streamlit as st
+from app.components.styles import inject_premium_styles
 from app.components.cards import render_kpi_card
 from app.utils.config import PORTFOLIO_TITLE, PORTFOLIO_SUBTITLE, DEVELOPER_NAME, PROJECT_TYPE
 
 def render_home_content():
+    inject_premium_styles()
     st.markdown(f"<h1 class='glowing-title gradient-text'>{PORTFOLIO_TITLE}</h1>", unsafe_allow_html=True)
     st.write(PORTFOLIO_SUBTITLE)
     st.markdown("<br>", unsafe_allow_html=True)
