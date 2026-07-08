@@ -11,7 +11,7 @@ def inject_premium_styles():
         """
         <style>
         /* Apply fonts globally */
-        html, body, [class*="css"], .stMarkdown, p, span, label, li, h1, h2, h3, h4, h5, h6 {
+        html, body, .stMarkdown, p, label, li, button, input, select, h1, h2, h3, h4, h5, h6 {
             font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
 
