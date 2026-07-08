@@ -36,33 +36,33 @@ inject_premium_styles()
 
 # Define multi-page application routing structure
 home_page = st.Page(
-    "app/home_content.py", 
+    "home_content.py", 
     title="Home", 
     icon="🏠", 
     default=True
 )
 predictor_page = st.Page(
-    "app/pages/1_predictor.py", 
+    "pages/1_predictor.py", 
     title="Churn Predictor", 
     icon="🔮"
 )
 analytics_page = st.Page(
-    "app/pages/2_analytics.py", 
+    "pages/2_analytics.py", 
     title="Analytics", 
     icon="📊"
 )
 model_performance_page = st.Page(
-    "app/pages/3_model_performance.py", 
+    "pages/3_model_performance.py", 
     title="Model Performance", 
     icon="📈"
 )
 insights_page = st.Page(
-    "app/pages/4_insights.py", 
+    "pages/4_insights.py", 
     title="Business Insights", 
     icon="💡"
 )
 admin_page = st.Page(
-    "app/pages/5_admin.py", 
+    "pages/5_admin.py", 
     title="Admin Console", 
     icon="🔐"
 )
