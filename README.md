@@ -8,10 +8,10 @@ A professional Machine Learning portfolio project designed to predict customer c
 - [Project Overview & Problem Statement](#project-overview--problem-statement)
 - [Business Impact Analysis](#business-impact-analysis)
 - [Dataset Profile](#dataset-profile)
-- [Project Structure](#project-structure)
+- [Project Architecture & Directory Structure](#project-architecture--directory-structure)
 - [Machine Learning Pipeline](#machine-learning-pipeline)
 - [Model Comparison & Results](#model-comparison--results)
-- [Streamlit Web Application](#streamlit-web-application)
+- [Streamlit Multi-Page Web Application](#streamlit-multi-page-web-application)
 - [Installation & How to Run](#installation--how-to-run)
 - [Future Enhancements](#future-enhancements)
 - [License & Authors](#license--authors)
@@ -26,7 +26,8 @@ This project implements a complete, production-grade Machine Learning pipeline t
 2. Conducts Exploratory Data Analysis (EDA) to map key churn indicators.
 3. Trains and benchmarks classification models (`Logistic Regression`, `Decision Trees`, `Random Forests`).
 4. Generates diagnostics (Confusion Matrix, ROC Curve, Precision-Recall Curve).
-5. Deploys the best classifier as an interactive Streamlit web dashboard.
+5. Deploys the best classifier as an interactive Streamlit multi-page web dashboard.
+6. Integrates query logging, diagnostic reports, and isolated pytest assertions.
 
 ---
 
@@ -54,9 +55,32 @@ The system utilizes the classic **IBM Watson Telco Customer Churn dataset** (7,0
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Architecture & Directory Structure
+The repository is refactored into a decoupled modular structure separating page presentations, logic services, widgets, and utilities:
+
 ```text
 customer-churn-prediction/
+├── app/
+│   ├── components/           # Reusable styled UI widgets & layout functions
+│   │   ├── cards.py          # Custom metric, verdict, and step wizards
+│   │   ├── sidebar.py        # Static sidebar with developer profiles & specs
+│   │   └── styles.py         # Premium dark-theme & glassmorphism CSS
+│   ├── services/             # Core business logic layer
+│   │   ├── analytics_service.py # Cohort filtering & loading
+│   │   ├── history_service.py   # Prediction logging & CSV logs database manager
+│   │   └── prediction_service.py # Pipeline caching & inference contributions
+│   ├── utils/                # Shared helper functions
+│   │   ├── config.py         # Centralized parameters & data directories
+│   │   ├── export.py         # CSV, Text diagnostics, and FPDF2 PDF exports
+│   │   └── validators.py     # Inputs boundary constraints validations
+│   ├── pages/                # Multi-page routing views
+│   │   ├── 1_predictor.py    # Predictor Wizard
+│   │   ├── 2_analytics.py    # Cohort visualizations dashboard
+│   │   ├── 3_model_performance.py # Precision-Recall, ROC, Confusion heatmaps
+│   │   ├── 4_insights.py     # Action playbooks & segmentations
+│   │   └── 5_admin.py        # Log administration command console
+│   ├── home_content.py       # Landing page specifications template
+│   └── main.py               # Main application routing entrypoint
 ├── data/
 │   ├── raw/                  # Original raw dataset
 │   └── processed/            # Preprocessed & cleaned CSV (ready for ML)
@@ -65,23 +89,16 @@ customer-churn-prediction/
 │   ├── scaler.pkl            # Standard Scaler
 │   ├── feature_names.pkl     # Dummy column names
 │   └── label_encoder.pkl     # Binary categories mappings
-├── reports/
-│   └── evaluation/           # Diagnostic evaluation plots
-│       ├── confusion_matrix.png
-│       ├── roc_curve.png
-│       ├── precision_recall_curve.png
-│       ├── feature_importance.png
-│       └── metrics_comparison.png
-├── src/                      # Production scripts
+├── reports/                  # Generated figures & evaluation diagnostics
+├── spec/                     # Architecture & Case Study specification documentation
+├── src/                      # Data engineering & model training scripts
 │   ├── download_data.py      # Dataset acquisition
 │   ├── preprocess.py         # Data cleaning & type conversion
 │   ├── model_training.py     # Training and model benchmarking
 │   └── model_evaluation.py   # Diagnostics and figures generator
-├── app/
-│   └── main.py               # Streamlit Dashboard code
+├── tests/                    # Preprocessing & inference unit tests
 ├── requirements.txt          # Package dependencies
-├── .gitignore                # Version control ignore rules
-└── README.md                 # Project documentation
+└── README.md                 # Main portfolio documentation
 ```
 
 ---
@@ -120,13 +137,14 @@ During test-set validation, the benchmarked classifiers yielded:
 
 ---
 
-## 🖥️ Streamlit Web Application
+## 🖥️ Streamlit Multi-Page Web Application
 The deployed interface provides:
-* **Real-time Inference**: Inputs for demographic, financial, and service variables.
-* **Risk Score Gauge**: Displays predictions color-coded based on probability thresholds (🟢 Low Churn Risk <30% | 🟡 Medium Churn Risk 30%-80% | 🔴 High Churn Risk >80%).
-* **Actionable Countermeasures**: Dynamically suggests custom plans based on user risk score.
-* **Export Controls**: Allow developers or admins to download predictions as CSV tables or full diagnostic reports.
-* **Interactive Performance Dashboard**: Displays metric cards and diagnostic plots inside native tabs.
+* **🏠 Home**: Overview, project scopes, technical specifications, and centralized KPI widgets.
+* **🔮 Churn Predictor**: Step-by-step wizard forms, input validation rules, probability scoring, localized Plotly driver charts, and one-click PDF, CSV, or Text reports exporters.
+* **📊 Analytics**: Dynamic cohort segmentations, distribution histograms, contract ratio comparisons, billing boxplots, payment methods, and variable correlation heatmaps.
+* **📈 Model Performance**: Interactive confusion matrix heatmaps, ROC curves, and Precision-Recall trade-off plots.
+* **💡 Business Insights**: Stakeholder-centric playbooks outlining risk migration strategies.
+* **🔐 Admin Console**: Credential-authenticated log query center featuring search tools and log purging controls.
 
 ---
 
@@ -134,7 +152,7 @@ The deployed interface provides:
 
 ### 1. Clone & Setup Environment
 ```bash
-git clone https://github.com/yourusername/customer-churn-prediction.git
+git clone https://github.com/naveenpixel1/customer-churn-prediction.git
 cd customer-churn-prediction
 python -m venv venv
 venv\Scripts\activate
@@ -153,7 +171,12 @@ python src/model_training.py
 python src/model_evaluation.py
 ```
 
-### 4. Launch Streamlit Application
+### 4. Execute Test Suite
+```bash
+pytest
+```
+
+### 5. Launch Streamlit Application
 ```bash
 streamlit run app/main.py
 ```
