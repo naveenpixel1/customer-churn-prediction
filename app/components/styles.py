@@ -80,12 +80,22 @@ def inject_premium_styles():
             background: rgba(0, 212, 170, 0.5);
         }}
 
-        /* Gradient Text utility */
+        /* RGB neon light shifting animations */
+        @keyframes rgb-shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Gradient Text utility with active RGB shift */
         .gradient-text {{
-            background: linear-gradient(135deg, #a78bfa 0%, #00D4AA 50%, #FF6B6B 100%) !important;
+            background: linear-gradient(120deg, #8B5CF6, #00D4AA, #FF6B6B, #3B82F6, #8B5CF6) !important;
+            background-size: 300% 300% !important;
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             font-weight: 800;
+            animation: rgb-shimmer 6s ease infinite !important;
+            display: inline-block;
         }}
 
         /* Futuristic Glassmorphism Card Container */
@@ -175,11 +185,17 @@ def inject_premium_styles():
             border-color: rgba(108, 99, 255, 0.25) !important;
         }}
 
-        /* Glowing titles */
+        /* Glowing titles with pulsing RGB shadow */
+        @keyframes rgb-shadow {
+            0% { text-shadow: 0 0 15px rgba(108, 99, 255, 0.4), 0 0 30px rgba(108, 99, 255, 0.15); }
+            50% { text-shadow: 0 0 20px rgba(0, 212, 170, 0.55), 0 0 35px rgba(0, 212, 170, 0.25); }
+            100% { text-shadow: 0 0 15px rgba(108, 99, 255, 0.4), 0 0 30px rgba(108, 99, 255, 0.15); }
+        }
+
         .glowing-title {{
             font-weight: 800 !important;
             color: #FFFFFF !important;
-            text-shadow: 0 0 25px rgba(108, 99, 255, 0.45) !important;
+            animation: rgb-shadow 4s ease-in-out infinite alternate !important;
             margin-bottom: 18px !important;
             letter-spacing: -0.5px !important;
         }}
