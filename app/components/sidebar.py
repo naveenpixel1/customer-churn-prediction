@@ -24,9 +24,15 @@ def render_sidebar():
         )
         st.markdown(
             f"""
-            <div style="background: rgba(108, 99, 255, 0.05); border: 1px solid rgba(108, 99, 255, 0.15); border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; align-items: center;">
-                <span style="font-size: 16px; margin-right: 8px;">👤</span>
-                <span style="font-size: 13px; color: #E2E8F0; font-weight: 500;">Developed by <strong>{DEVELOPER_NAME}</strong></span>
+            <div style="background: rgba(108, 99, 255, 0.05); border: 1px solid rgba(108, 99, 255, 0.15); border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center;">
+                    <span style="font-size: 16px; margin-right: 8px;">👤</span>
+                    <span style="font-size: 13px; color: #E2E8F0; font-weight: 500;">Developed by <strong>{DEVELOPER_NAME}</strong></span>
+                </div>
+                <div style="display: flex; align-items: center; padding-left: 24px;">
+                    <span style="font-size: 14px; margin-right: 8px;">🔗</span>
+                    <a href="https://github.com/naveenpixel1/customer-churn-prediction" target="_blank" style="color: #6C63FF; font-size: 13px; font-weight: 600; text-decoration: none; transition: color 0.2s;">GitHub Repository</a>
+                </div>
             </div>
             """,
             unsafe_allow_html=True

@@ -86,6 +86,7 @@ def render_home_content():
         <div style="text-align: center; padding: 40px 10px; margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.06); color: #6c757d; font-size: 14px;">
             <p><strong>{PORTFOLIO_TITLE}</strong></p>
             <p>{PROJECT_TYPE} | Developed by {DEVELOPER_NAME}</p>
+            <p><a href="https://github.com/naveenpixel1/customer-churn-prediction" target="_blank" style="color: #6C63FF; text-decoration: none; font-weight: 600;">Code Repository on GitHub</a></p>
             <p>Developed using: Python | Scikit-learn | Pandas | NumPy | Plotly | Streamlit</p>
             <p>&copy; 2026. All Rights Reserved.</p>
         </div>
