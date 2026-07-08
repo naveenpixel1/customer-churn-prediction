@@ -86,59 +86,40 @@ def render_home_content():
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<h3 class='glowing-title'>🔄 End-to-End Machine Learning Pipeline</h3>", unsafe_allow_html=True)
     st.markdown(
-        """
-        <div class="glass-card fade-in" style="padding: 20px;">
-            <p style="color: #94A3B8; font-size: 14px; margin-top:0; margin-bottom: 20px;">The diagram below illustrates the live data preprocessing, scaling transformation, and classification inference pipeline executed upon customer evaluation.</p>
-            <svg viewBox="0 0 800 120" xmlns="http://www.w3.org/2000/svg" style="background: rgba(15, 18, 36, 0.4); border-radius: 12px; border: 1px solid rgba(108, 99, 255, 0.15); padding: 15px; width: 100%;">
-                <defs>
-                    <linearGradient id="purple-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#8B5CF6" />
-                        <stop offset="100%" stop-color="#00D4AA" />
-                    </linearGradient>
-                </defs>
-                <!-- Step 1 -->
-                <rect x="10" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
-                <text x="75" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">1. Customer Input</text>
-                <text x="75" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Demographics & Services</text>
-                
-                <!-- Arrow 1 -->
-                <line x1="140" y1="50" x2="165" y2="50" stroke="#00D4AA" stroke-width="2" />
-                <polygon points="165,46 172,50 165,54" fill="#00D4AA" />
-                
-                <!-- Step 2 -->
-                <rect x="172" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
-                <text x="237" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">2. Preprocessing</text>
-                <text x="237" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">One-Hot Dummies Alignment</text>
-                
-                <!-- Arrow 2 -->
-                <line x1="302" y1="50" x2="327" y2="50" stroke="#00D4AA" stroke-width="2" />
-                <polygon points="327,46 334,50 327,54" fill="#00D4AA" />
-                
-                <!-- Step 3 -->
-                <rect x="334" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
-                <text x="399" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">3. Scaling Transform</text>
-                <text x="399" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Robust Scaling (scaler.pkl)</text>
-                
-                <!-- Arrow 3 -->
-                <line x1="464" y1="50" x2="489" y2="50" stroke="#00D4AA" stroke-width="2" />
-                <polygon points="489,46 496,50 489,54" fill="#00D4AA" />
-                
-                <!-- Step 4 -->
-                <rect x="496" y="25" width="130" height="50" rx="8" fill="rgba(108, 99, 255, 0.15)" stroke="url(#purple-cyan)" stroke-width="2" />
-                <text x="561" y="48" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">4. Logistic Regression</text>
-                <text x="561" y="62" fill="#00D4AA" font-size="9" font-weight="600" text-anchor="middle">Inference (model.pkl)</text>
-                
-                <!-- Arrow 4 -->
-                <line x1="626" y1="50" x2="651" y2="50" stroke="#00D4AA" stroke-width="2" />
-                <polygon points="651,46 658,50 651,54" fill="#00D4AA" />
-                
-                <!-- Step 5 -->
-                <rect x="658" y="25" width="130" height="50" rx="8" fill="rgba(0,212,170,0.08)" stroke="#00D4AA" stroke-width="1.5" />
-                <text x="723" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">5. Explainability</text>
-                <text x="723" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Log-Odds Feature Drivers</text>
-            </svg>
-        </div>
-        """,
+        """<div class="glass-card fade-in" style="padding: 20px;">
+<p style="color: #94A3B8; font-size: 14px; margin-top:0; margin-bottom: 20px;">The diagram below illustrates the live data preprocessing, scaling transformation, and classification inference pipeline executed upon customer evaluation.</p>
+<svg viewBox="0 0 800 120" xmlns="http://www.w3.org/2000/svg" style="background: rgba(15, 18, 36, 0.4); border-radius: 12px; border: 1px solid rgba(108, 99, 255, 0.15); padding: 15px; width: 100%;">
+<defs>
+<linearGradient id="purple-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+<stop offset="0%" stop-color="#8B5CF6" />
+<stop offset="100%" stop-color="#00D4AA" />
+</linearGradient>
+</defs>
+<rect x="10" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
+<text x="75" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">Step 1: Input</text>
+<text x="75" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Demographics & Services</text>
+<line x1="140" y1="50" x2="165" y2="50" stroke="#00D4AA" stroke-width="2" />
+<polygon points="165,46 172,50 165,54" fill="#00D4AA" />
+<rect x="172" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
+<text x="237" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">Step 2: Preprocess</text>
+<text x="237" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">One-Hot Dummies Alignment</text>
+<line x1="302" y1="50" x2="327" y2="50" stroke="#00D4AA" stroke-width="2" />
+<polygon points="327,46 334,50 327,54" fill="#00D4AA" />
+<rect x="334" y="25" width="130" height="50" rx="8" fill="rgba(108,99,255,0.08)" stroke="#6C63FF" stroke-width="1.5" />
+<text x="399" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">Step 3: Scale</text>
+<text x="399" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Robust Scaling (scaler.pkl)</text>
+<line x1="464" y1="50" x2="489" y2="50" stroke="#00D4AA" stroke-width="2" />
+<polygon points="489,46 496,50 489,54" fill="#00D4AA" />
+<rect x="496" y="25" width="130" height="50" rx="8" fill="rgba(108, 99, 255, 0.15)" stroke="url(#purple-cyan)" stroke-width="2" />
+<text x="561" y="48" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">Step 4: Predict</text>
+<text x="561" y="62" fill="#00D4AA" font-size="9" font-weight="600" text-anchor="middle">Inference (model.pkl)</text>
+<line x1="626" y1="50" x2="651" y2="50" stroke="#00D4AA" stroke-width="2" />
+<polygon points="651,46 658,50 651,54" fill="#00D4AA" />
+<rect x="658" y="25" width="130" height="50" rx="8" fill="rgba(0,212,170,0.08)" stroke="#00D4AA" stroke-width="1.5" />
+<text x="723" y="48" fill="#E2E8F0" font-size="11" font-weight="600" text-anchor="middle">Step 5: Explain</text>
+<text x="723" y="62" fill="#94A3B8" font-size="9" text-anchor="middle">Log-Odds Feature Drivers</text>
+</svg>
+</div>""",
         unsafe_allow_html=True
     )
 
