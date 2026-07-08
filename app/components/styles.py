@@ -50,10 +50,11 @@ def inject_premium_styles():
             background-attachment: fixed !important;
         }}
         
-        /* Make header translucent */
+        /* Make header solid to hide content scrolling under it */
         [data-testid="stHeader"] {{
-            background-color: transparent !important;
-            backdrop-filter: blur(5px);
+            background-color: #070814 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }}
 
         /* Floating Translucent Glass Sidebar */
