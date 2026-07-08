@@ -97,118 +97,113 @@ with col5:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Visualizations Row 1: Confusion Matrix & ROC Curve
 row1_col1, row1_col2 = st.columns(2)
 
 with row1_col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("🏁 Live Confusion Matrix")
-    
-    cm = confusion_matrix(y_true, y_pred)
-    tn, fp, fn, tp = cm.ravel()
-    
-    z_cm = [[int(tn), int(fp)], [int(fn), int(tp)]]
-    x_cm = ['Predicted Stay', 'Predicted Churn']
-    y_cm = ['Actual Stay', 'Actual Churn']
-    
-    fig_cm = go.Figure(data=go.Heatmap(
-        z=z_cm,
-        x=x_cm,
-        y=y_cm,
-        colorscale='Blues',
-        text=[[f"TN: {tn}", f"FP: {fp}"], [f"FN: {fn}", f"TP: {tp}"]],
-        texttemplate="%{text}",
-        hoverinfo="none"
-    ))
-    fig_cm.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="#E2E8F0"),
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=280
-    )
-    st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
-    st.caption("True Negative (TN: 927) | False Positive (FP: 108) | False Negative (FN: 165) | True Positive (TP: 209)")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("🏁 Live Confusion Matrix")
+        
+        cm = confusion_matrix(y_true, y_pred)
+        tn, fp, fn, tp = cm.ravel()
+        
+        z_cm = [[int(tn), int(fp)], [int(fn), int(tp)]]
+        x_cm = ['Predicted Stay', 'Predicted Churn']
+        y_cm = ['Actual Stay', 'Actual Churn']
+        
+        fig_cm = go.Figure(data=go.Heatmap(
+            z=z_cm,
+            x=x_cm,
+            y=y_cm,
+            colorscale='Blues',
+            text=[[f"TN: {tn}", f"FP: {fp}"], [f"FN: {fn}", f"TP: {tp}"]],
+            texttemplate="%{text}",
+            hoverinfo="none"
+        ))
+        fig_cm.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=280
+        )
+        st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
+        st.caption("True Negative (TN: 927) | False Positive (FP: 108) | False Negative (FN: 165) | True Positive (TP: 209)")
 
 with row1_col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📈 ROC Curve Analysis")
-    
-    fpr, tpr, thresholds = roc_curve(y_true, y_prob)
-    roc_auc = auc(fpr, tpr)
-    
-    fig_roc = go.Figure()
-    fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC (AUC = {roc_auc:.4f})', line=dict(color='#00D4AA', width=2.5)))
-    fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Baseline', line=dict(color='rgba(255,255,255,0.15)', dash='dash')))
-    
-    fig_roc.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="#E2E8F0"),
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=280,
-        xaxis=dict(title="False Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-        yaxis=dict(title="True Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-    )
-    st.plotly_chart(fig_roc, use_container_width=True, config={"displayModeBar": False})
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("📈 ROC Curve Analysis")
+        
+        fpr, tpr, thresholds = roc_curve(y_true, y_prob)
+        roc_auc = auc(fpr, tpr)
+        
+        fig_roc = go.Figure()
+        fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC (AUC = {roc_auc:.4f})', line=dict(color='#00D4AA', width=2.5)))
+        fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Baseline', line=dict(color='rgba(255,255,255,0.15)', dash='dash')))
+        
+        fig_roc.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=280,
+            xaxis=dict(title="False Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(title="True Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+        )
+        st.plotly_chart(fig_roc, use_container_width=True, config={"displayModeBar": False})
 
 # Visualizations Row 2: Precision-Recall Curve & Feature Importances
 row2_col1, row2_col2 = st.columns(2)
 
 with row2_col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("⚖️ Precision-Recall Trade-off")
-    
-    prec, rec, _ = precision_recall_curve(y_true, y_prob)
-    ap = average_precision_score(y_true, y_prob)
-    
-    fig_pr = go.Figure()
-    fig_pr.add_trace(go.Scatter(x=rec, y=prec, mode='lines', name=f'PR Curve (AP = {ap:.4f})', line=dict(color='#FFB347', width=2.5)))
-    
-    fig_pr.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="#E2E8F0"),
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=280,
-        xaxis=dict(title="Recall (Sensitivity)", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05]),
-        yaxis=dict(title="Precision", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05])
-    )
-    st.plotly_chart(fig_pr, use_container_width=True, config={"displayModeBar": False})
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("⚖️ Precision-Recall Trade-off")
+        
+        prec, rec, _ = precision_recall_curve(y_true, y_prob)
+        ap = average_precision_score(y_true, y_prob)
+        
+        fig_pr = go.Figure()
+        fig_pr.add_trace(go.Scatter(x=rec, y=prec, mode='lines', name=f'PR Curve (AP = {ap:.4f})', line=dict(color='#FFB347', width=2.5)))
+        
+        fig_pr.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=280,
+            xaxis=dict(title="Recall (Sensitivity)", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05]),
+            yaxis=dict(title="Precision", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05])
+        )
+        st.plotly_chart(fig_pr, use_container_width=True, config={"displayModeBar": False})
 
 with row2_col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("🧬 Coefficient Weight Feature Importance")
-    
-    # Access logistic regression coefficients
-    coefs = pred_service.model.coef_[0]
-    imp_df = pd.DataFrame({
-        'Feature': pred_service.feature_names,
-        'Coefficient': coefs,
-        'Abs_Coef': np.abs(coefs)
-    }).sort_values(by='Abs_Coef', ascending=False).head(10)
-    
-    # Sort for chart visualization
-    imp_df = imp_df.sort_values(by='Coefficient')
-    colors = ['#FF6B6B' if w > 0 else '#6C63FF' for w in imp_df['Coefficient']]
-    
-    fig_imp = go.Figure(go.Bar(
-        x=imp_df['Coefficient'],
-        y=imp_df['Feature'],
-        orientation='h',
-        marker_color=colors
-    ))
-    fig_imp.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="#E2E8F0"),
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=280,
-        xaxis=dict(title="Coefficient Weight", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-        yaxis=dict(showgrid=False)
-    )
-    st.plotly_chart(fig_imp, use_container_width=True, config={"displayModeBar": False})
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("🧬 Coefficient Weight Feature Importance")
+        
+        # Access logistic regression coefficients
+        coefs = pred_service.model.coef_[0]
+        imp_df = pd.DataFrame({
+            'Feature': pred_service.feature_names,
+            'Coefficient': coefs,
+            'Abs_Coef': np.abs(coefs)
+        }).sort_values(by='Abs_Coef', ascending=False).head(10)
+        
+        # Sort for chart visualization
+        imp_df = imp_df.sort_values(by='Coefficient')
+        colors = ['#FF6B6B' if w > 0 else '#6C63FF' for w in imp_df['Coefficient']]
+        
+        fig_imp = go.Figure(go.Bar(
+            x=imp_df['Coefficient'],
+            y=imp_df['Feature'],
+            orientation='h',
+            marker_color=colors
+        ))
+        fig_imp.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=280,
+            xaxis=dict(title="Coefficient Weight", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(showgrid=False)
+        )
+        st.plotly_chart(fig_imp, use_container_width=True, config={"displayModeBar": False})

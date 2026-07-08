@@ -62,55 +62,52 @@ if 'last_inputs' not in st.session_state:
 if 'last_result' not in st.session_state:
     st.session_state.last_result = {}
 
-# 2. 3-COLUMN INTERACTIVE INPUT FORM LAYOUT
-st.markdown('<div class="glass-card fade-in">', unsafe_allow_html=True)
-st.subheader("⚙️ Customer Account Profile Inputs")
-
-col_dem, col_ser, col_acc = st.columns(3)
-
-with col_dem:
-    st.markdown("<h4 style='color:#6C63FF; margin-top:0;'>👤 Demographics</h4>", unsafe_allow_html=True)
-    gender = st.selectbox("Gender", ["Female", "Male"], index=0)
-    senior_citizen = st.selectbox("Senior Citizen Status", ["No", "Yes"], index=0)
-    partner = st.selectbox("Has a Partner?", ["No", "Yes"], index=0)
-    dependents = st.selectbox("Has Dependents?", ["No", "Yes"], index=0)
-
-with col_ser:
-    st.markdown("<h4 style='color:#00D4AA; margin-top:0;'>📶 Active Services</h4>", unsafe_allow_html=True)
-    phone_service = st.selectbox("Phone Service Subscribed?", ["No", "Yes"], index=1)
-    multiple_lines = st.selectbox("Multiple Lines Configuration", ["No", "Yes", "No phone service"], index=0)
-    internet_service = st.selectbox("Internet Service Provider Type", ["DSL", "Fiber optic", "No"], index=1)
-    online_security = st.selectbox("Online Security Add-on?", ["No", "Yes", "No internet service"], index=0)
-    online_backup = st.selectbox("Online Backup Add-on?", ["No", "Yes", "No internet service"], index=0)
-    device_protection = st.selectbox("Device Protection Add-on?", ["No", "Yes", "No internet service"], index=0)
-    tech_support = st.selectbox("Tech Support Add-on?", ["No", "Yes", "No internet service"], index=0)
-    streaming_tv = st.selectbox("Streaming TV Service?", ["No", "Yes", "No internet service"], index=0)
-    streaming_movies = st.selectbox("Streaming Movies Service?", ["No", "Yes", "No internet service"], index=0)
-
-with col_acc:
-    st.markdown("<h4 style='color:#FFB347; margin-top:0;'>💳 Financials & Account</h4>", unsafe_allow_html=True)
-    tenure = st.slider("Tenure (Active Months)", min_value=0, max_value=72, value=12)
-    contract = st.selectbox("Contract Agreement Type", ["Month-to-month", "One year", "Two year"], index=0)
-    paperless = st.selectbox("Paperless Billing Active?", ["No", "Yes"], index=1)
-    payment_method = st.selectbox(
-        "Active Payment Method Channel", 
-        ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], 
-        index=0
-    )
-    monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, max_value=200.0, value=65.0, step=0.5)
+with st.container(border=True):
+    st.subheader("⚙️ Customer Account Profile Inputs")
     
-    # Dynamically estimate total charges as Tenure * Monthly Charges, but allow manual overrides
-    calculated_total = float(tenure * monthly_charges) if tenure > 0 else 0.0
-    total_charges = st.number_input(
-        "Total Charges ($)", 
-        min_value=0.0, 
-        max_value=15000.0, 
-        value=calculated_total, 
-        step=10.0,
-        help="Estimated based on current monthly charges and tenure. Override if necessary."
-    )
-
-st.markdown('</div>', unsafe_allow_html=True)
+    col_dem, col_ser, col_acc = st.columns(3)
+    
+    with col_dem:
+        st.markdown("<h4 style='color:#6C63FF; margin-top:0;'>👤 Demographics</h4>", unsafe_allow_html=True)
+        gender = st.selectbox("Gender", ["Female", "Male"], index=0)
+        senior_citizen = st.selectbox("Senior Citizen Status", ["No", "Yes"], index=0)
+        partner = st.selectbox("Has a Partner?", ["No", "Yes"], index=0)
+        dependents = st.selectbox("Has Dependents?", ["No", "Yes"], index=0)
+    
+    with col_ser:
+        st.markdown("<h4 style='color:#00D4AA; margin-top:0;'>📶 Active Services</h4>", unsafe_allow_html=True)
+        phone_service = st.selectbox("Phone Service Subscribed?", ["No", "Yes"], index=1)
+        multiple_lines = st.selectbox("Multiple Lines Configuration", ["No", "Yes", "No phone service"], index=0)
+        internet_service = st.selectbox("Internet Service Provider Type", ["DSL", "Fiber optic", "No"], index=1)
+        online_security = st.selectbox("Online Security Add-on?", ["No", "Yes", "No internet service"], index=0)
+        online_backup = st.selectbox("Online Backup Add-on?", ["No", "Yes", "No internet service"], index=0)
+        device_protection = st.selectbox("Device Protection Add-on?", ["No", "Yes", "No internet service"], index=0)
+        tech_support = st.selectbox("Tech Support Add-on?", ["No", "Yes", "No internet service"], index=0)
+        streaming_tv = st.selectbox("Streaming TV Service?", ["No", "Yes", "No internet service"], index=0)
+        streaming_movies = st.selectbox("Streaming Movies Service?", ["No", "Yes", "No internet service"], index=0)
+    
+    with col_acc:
+        st.markdown("<h4 style='color:#FFB347; margin-top:0;'>💳 Financials & Account</h4>", unsafe_allow_html=True)
+        tenure = st.slider("Tenure (Active Months)", min_value=0, max_value=72, value=12)
+        contract = st.selectbox("Contract Agreement Type", ["Month-to-month", "One year", "Two year"], index=0)
+        paperless = st.selectbox("Paperless Billing Active?", ["No", "Yes"], index=1)
+        payment_method = st.selectbox(
+            "Active Payment Method Channel", 
+            ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"], 
+            index=0
+        )
+        monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, max_value=200.0, value=65.0, step=0.5)
+        
+        # Dynamically estimate total charges as Tenure * Monthly Charges, but allow manual overrides
+        calculated_total = float(tenure * monthly_charges) if tenure > 0 else 0.0
+        total_charges = st.number_input(
+            "Total Charges ($)", 
+            min_value=0.0, 
+            max_value=15000.0, 
+            value=calculated_total, 
+            step=10.0,
+            help="Estimated based on current monthly charges and tenure. Override if necessary."
+        )
 
 # Action validation trigger
 if st.button("🔮 Analyze Customer Risk Profile", use_container_width=True):
@@ -235,120 +232,115 @@ if st.session_state.prediction_ran:
     out_col1, out_col2 = st.columns(2)
     
     with out_col1:
-        st.markdown('<div class="glass-card fade-in">', unsafe_allow_html=True)
-        st.subheader("🎯 Risk Score Assessment")
-        
-        # Premium color gauge plotting
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=prob * 100,
-            domain={'x': [0, 1], 'y': [0, 1]},
-            gauge={
-                'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#94A3B8"},
-                'bar': {'color': "#6C63FF", 'thickness': 0.3},
-                'bgcolor': "rgba(26, 29, 46, 0.5)",
-                'borderwidth': 2,
-                'bordercolor': "rgba(108, 99, 255, 0.2)",
-                'steps': [
-                    {'range': [0, 30], 'color': 'rgba(0, 212, 170, 0.2)'},
-                    {'range': [30, 70], 'color': 'rgba(255, 179, 71, 0.2)'},
-                    {'range': [70, 100], 'color': 'rgba(255, 107, 107, 0.2)'}
-                ],
-                'threshold': {
-                    'line': {'color': "#FF6B6B", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 70
+        with st.container(border=True):
+            st.subheader("🎯 Risk Score Assessment")
+            
+            # Premium color gauge plotting
+            fig_gauge = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=prob * 100,
+                domain={'x': [0, 1], 'y': [0, 1]},
+                gauge={
+                    'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#94A3B8"},
+                    'bar': {'color': "#6C63FF", 'thickness': 0.3},
+                    'bgcolor': "rgba(26, 29, 46, 0.5)",
+                    'borderwidth': 2,
+                    'bordercolor': "rgba(108, 99, 255, 0.2)",
+                    'steps': [
+                        {'range': [0, 30], 'color': 'rgba(0, 212, 170, 0.2)'},
+                        {'range': [30, 70], 'color': 'rgba(255, 179, 71, 0.2)'},
+                        {'range': [70, 100], 'color': 'rgba(255, 107, 107, 0.2)'}
+                    ],
+                    'threshold': {
+                        'line': {'color': "#FF6B6B", 'width': 4},
+                        'thickness': 0.75,
+                        'value': 70
+                    }
                 }
-            }
-        ))
-        fig_gauge.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=20, r=20, t=30, b=20),
-            height=250
-        )
-        st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False})
-        st.markdown('</div>', unsafe_allow_html=True)
+            ))
+            fig_gauge.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=20, r=20, t=30, b=20),
+                height=250
+            )
+            st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False})
         
     with out_col2:
-        st.markdown('<div class="glass-card fade-in">', unsafe_allow_html=True)
-        st.subheader("🧬 Local Churn Driver Contributions")
-        st.write("Top parameters contributing positively to customer attrition probability (Log-Odds weights):")
-        
-        # Display top 3 features driving churn
-        if sorted_pos:
-            for i, (feat, val) in enumerate(sorted_pos[:3]):
-                clean_name = feat.replace('_', ' ').title()
-                st.markdown(
-                    f"""
-                    <div style="background: rgba(255, 107, 107, 0.05); border: 1px solid rgba(255, 107, 107, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight:600; color:#E2E8F0;">{i+1}. {clean_name}</span>
-                        <span style="color:#FF6B6B; font-weight:700;">+{val:.3f} log-odds</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-        else:
-            st.write("✓ No features are positively pushing this customer towards churn.")
+        with st.container(border=True):
+            st.subheader("🧬 Local Churn Driver Contributions")
+            st.write("Top parameters contributing positively to customer attrition probability (Log-Odds weights):")
             
-        st.markdown('</div>', unsafe_allow_html=True)
+            # Display top 3 features driving churn
+            if sorted_pos:
+                for i, (feat, val) in enumerate(sorted_pos[:3]):
+                    clean_name = feat.replace('_', ' ').title()
+                    st.markdown(
+                        f"""
+                        <div style="background: rgba(255, 107, 107, 0.05); border: 1px solid rgba(255, 107, 107, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight:600; color:#E2E8F0;">{i+1}. {clean_name}</span>
+                            <span style="color:#FF6B6B; font-weight:700;">+{val:.3f} log-odds</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.write("✓ No features are positively pushing this customer towards churn.")
         
     # 5. WHAT-IF / PRESCRIPTIVE ANALYTICS SECTION
-    st.markdown('<div class="glass-card fade-in">', unsafe_allow_html=True)
-    st.subheader("💡 Prescriptive Retention Playbook")
-    
-    recs = []
-    
-    # 1. Month-to-month contracts check
-    if inputs.get('Contract') == 'Month-to-month':
-        recs.append((
-            "📅 Migrate Month-to-Month Cohorts",
-            "This account is on a month-to-month contract. Offer a 10% monthly discount bundle "
-            "if they transition to an annual contract plan to significantly secure client lifecycle value (CLV)."
-        ))
+    with st.container(border=True):
+        st.subheader("💡 Prescriptive Retention Playbook")
         
-    # 2. Fiber Optic check with tech support
-    if inputs.get('InternetService') == 'Fiber optic' and inputs.get('TechSupport') != 'Yes':
-        recs.append((
-            "📶 Fiber Optic Support Bundling",
-            "Subscribed to Fiber Optic internet without Online Tech Support. Fiber optic lines show higher friction "
-            "rates; offer a bundled Tech Support add-on at a 50% discount to stabilize service satisfaction."
-        ))
+        recs = []
         
-    # 3. Payment Method electronic check friction check
-    if inputs.get('PaymentMethod') == 'Electronic check':
-        recs.append((
-            "💳 Automate Payment Methods",
-            "Active payment channel is Electronic Check. Incentivize migrating to bank transfer auto-pay "
-            "or Credit Card auto-pay configurations by offering a one-time $5 statement billing credit."
-        ))
-        
-    # 4. Price sensitivity vs Low tenure checks
-    if inputs.get('tenure', 0) <= 12 and inputs.get('MonthlyCharges', 0.0) >= 80.0:
-        recs.append((
-            "💵 High-Value New Cohort Onboarding",
-            "Customer is in their initial onboarding phase (tenure <= 12m) with billing charges >= $80.00. "
-            "Schedule a direct customer success callback check-in to confirm network reliability and satisfaction."
-        ))
-        
-    # 5. Online Security add-on missing check
-    if inputs.get('OnlineSecurity') != 'Yes' and inputs.get('InternetService') != 'No':
-        recs.append((
-            "🔐 Proactive Security Promotion",
-            "Active internet service is configured without Online Security. Promote active online security bundles "
-            "to increase customer account locking."
-        ))
-        
-    if not recs:
-        # Fallback for very low risk profiles
-        st.success("✓ Customer risk profile is solid. Maintain default billing quality service check-ins.")
-    else:
-        # Render dynamic recommendations
-        for title, desc in recs[:3]:
-            render_insight_card(title, desc, "danger" if risk_level in ['High', 'Critical'] else "warning")
+        # 1. Month-to-month contracts check
+        if inputs.get('Contract') == 'Month-to-month':
+            recs.append((
+                "📅 Migrate Month-to-Month Cohorts",
+                "This account is on a month-to-month contract. Offer a 10% monthly discount bundle "
+                "if they transition to an annual contract plan to significantly secure client lifecycle value (CLV)."
+            ))
             
-    st.markdown('</div>', unsafe_allow_html=True)
+        # 2. Fiber Optic check with tech support
+        if inputs.get('InternetService') == 'Fiber optic' and inputs.get('TechSupport') != 'Yes':
+            recs.append((
+                "📶 Fiber Optic Support Bundling",
+                "Subscribed to Fiber Optic internet without Online Tech Support. Fiber optic lines show higher friction "
+                "rates; offer a bundled Tech Support add-on at a 50% discount to stabilize service satisfaction."
+            ))
+            
+        # 3. Payment Method electronic check friction check
+        if inputs.get('PaymentMethod') == 'Electronic check':
+            recs.append((
+                "💳 Automate Payment Methods",
+                "Active payment channel is Electronic Check. Incentivize migrating to bank transfer auto-pay "
+                "or Credit Card auto-pay configurations by offering a one-time $5 statement billing credit."
+            ))
+            
+        # 4. Price sensitivity vs Low tenure checks
+        if inputs.get('tenure', 0) <= 12 and inputs.get('MonthlyCharges', 0.0) >= 80.0:
+            recs.append((
+                "💵 High-Value New Cohort Onboarding",
+                "Customer is in their initial onboarding phase (tenure <= 12m) with billing charges >= $80.00. "
+                "Schedule a direct customer success callback check-in to confirm network reliability and satisfaction."
+            ))
+            
+        # 5. Online Security add-on missing check
+        if inputs.get('OnlineSecurity') != 'Yes' and inputs.get('InternetService') != 'No':
+            recs.append((
+                "🔐 Proactive Security Promotion",
+                "Active internet service is configured without Online Security. Promote active online security bundles "
+                "to increase customer account locking."
+            ))
+            
+        if not recs:
+            # Fallback for very low risk profiles
+            st.success("✓ Customer risk profile is solid. Maintain default billing quality service check-ins.")
+        else:
+            # Render dynamic recommendations
+            for title, desc in recs[:3]:
+                render_insight_card(title, desc, "danger" if risk_level in ['High', 'Critical'] else "warning")
     
     # Report exporter utilities
     st.markdown("### 📥 Download Risk Assessment Artifacts")

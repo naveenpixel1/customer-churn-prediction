@@ -51,22 +51,22 @@ def inject_premium_styles():
         }
 
         /* Glassmorphism Card Container */
-        .glass-card {
-            background: rgba(26, 29, 46, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(108, 99, 255, 0.15);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        .glass-card, div[data-testid="stVerticalBlockBorder"] {
+            background: rgba(26, 29, 46, 0.65) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(108, 99, 255, 0.15) !important;
+            border-radius: 16px !important;
+            padding: 24px !important;
+            margin-bottom: 20px !important;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
         }
         
-        .glass-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(108, 99, 255, 0.35);
-            box-shadow: 0 12px 40px 0 rgba(108, 99, 255, 0.15);
+        .glass-card:hover, div[data-testid="stVerticalBlockBorder"]:hover {
+            transform: translateY(-4px) !important;
+            border-color: rgba(108, 99, 255, 0.35) !important;
+            box-shadow: 0 12px 40px 0 rgba(108, 99, 255, 0.15) !important;
         }
 
         /* Mini KPI Metric Card */

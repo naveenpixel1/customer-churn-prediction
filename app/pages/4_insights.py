@@ -108,43 +108,43 @@ with col2:
 st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("💡 Strategic Action Playbooks")
 
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown(
     """
-    <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">1. Migrate Month-to-Month Cohorts to Annual Terms (Priority: CRITICAL)</h4>
-    <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
-        Since month-to-month status is the highest risk marker, implement automated marketing incentives offering 
-        a billing discount (e.g. 10-15% discount for 12 months) in exchange for switching to a 1 or 2-year contract. 
-        The cost of the promotion is far lower than customer replacement acquisition costs.
-    </p>
+    <div class="glass-card">
+        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">1. Migrate Month-to-Month Cohorts to Annual Terms (Priority: CRITICAL)</h4>
+        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+            Since month-to-month status is the highest risk marker, implement automated marketing incentives offering 
+            a billing discount (e.g. 10-15% discount for 12 months) in exchange for switching to a 1 or 2-year contract. 
+            The cost of the promotion is far lower than customer replacement acquisition costs.
+        </p>
+    </div>
     """,
     unsafe_allow_html=True
 )
-st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown(
     f"""
-    <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">2. Bundle Online Security and Tech Support Features (Priority: HIGH)</h4>
-    <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
-        Subscribers with active Online Security and Tech Support add-ons demonstrate high retention rates (only <b>{yes_security_churn:.1%}</b> churn rate vs <b>{no_security_churn:.1%}</b> for those without). 
-        Offer a promotional bundle (e.g., first 3 months of security and tech support free) to month-to-month or new subscribers to anchor their accounts.
-    </p>
+    <div class="glass-card">
+        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">2. Bundle Online Security and Tech Support Features (Priority: HIGH)</h4>
+        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+            Subscribers with active Online Security and Tech Support add-ons demonstrate high retention rates (only <b>{yes_security_churn:.1%}</b> churn rate vs <b>{no_security_churn:.1%}</b> for those without). 
+            Offer a promotional bundle (e.g., first 3 months of security and tech support free) to month-to-month or new subscribers to anchor their accounts.
+        </p>
+    </div>
     """,
     unsafe_allow_html=True
 )
-st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown(
     """
-    <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">3. Incentivize Auto-Pay Configurations (Priority: MEDIUM)</h4>
-    <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
-        Target customers using manual checks (specifically Electronic Check payment methods) with direct-mail or in-app billing prompts 
-        offering a one-time $5.00 statement credit for registering an automated Credit Card or Bank Transfer payment source. 
-        This eliminates monthly transaction friction and dramatically improves lifetime value (LTV).
-    </p>
+    <div class="glass-card">
+        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">3. Incentivize Auto-Pay Configurations (Priority: MEDIUM)</h4>
+        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+            Target customers using manual checks (specifically Electronic Check payment methods) with direct-mail or in-app billing prompts 
+            offering a one-time $5.00 statement credit for registering an automated Credit Card or Bank Transfer payment source. 
+            This eliminates monthly transaction friction and dramatically improves lifetime value (LTV).
+        </p>
+    </div>
     """,
     unsafe_allow_html=True
 )
-st.markdown('</div>', unsafe_allow_html=True)

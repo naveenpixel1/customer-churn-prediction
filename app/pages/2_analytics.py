@@ -77,209 +77,202 @@ st.markdown("<br>", unsafe_allow_html=True)
 row1_col1, row1_col2 = st.columns(2)
 
 with row1_col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("🥧 Overall Retention Distribution")
-    
-    churn_counts = df_filtered['Churn'].value_counts()
-    if not churn_counts.empty:
-        fig_pie = px.pie(
-            names=churn_counts.index,
-            values=churn_counts.values,
-            hole=0.45,
-            color=churn_counts.index,
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"names": "Churned?"}
-        )
-        fig_pie.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=20, r=20, t=20, b=20),
-            height=300
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
-    else:
-        st.info("No matching records for current filters.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("🥧 Overall Retention Distribution")
+        
+        churn_counts = df_filtered['Churn'].value_counts()
+        if not churn_counts.empty:
+            fig_pie = px.pie(
+                names=churn_counts.index,
+                values=churn_counts.values,
+                hole=0.45,
+                color=churn_counts.index,
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"names": "Churned?"}
+            )
+            fig_pie.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=20, r=20, t=20, b=20),
+                height=300
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+        else:
+            st.info("No matching records for current filters.")
 
 with row1_col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📅 Tenure Analysis Histogram")
-    
-    if not df_filtered.empty:
-        fig_tenure = px.histogram(
-            df_filtered,
-            x="tenure",
-            color="Churn",
-            barmode="overlay",
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"tenure": "Active Tenure (Months)", "count": "Customer Count"},
-            opacity=0.65
-        )
-        fig_tenure.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=300,
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-        )
-        st.plotly_chart(fig_tenure, use_container_width=True)
-    else:
-        st.info("No matching records.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("📅 Tenure Analysis Histogram")
+        
+        if not df_filtered.empty:
+            fig_tenure = px.histogram(
+                df_filtered,
+                x="tenure",
+                color="Churn",
+                barmode="overlay",
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"tenure": "Active Tenure (Months)", "count": "Customer Count"},
+                opacity=0.65
+            )
+            fig_tenure.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=300,
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            )
+            st.plotly_chart(fig_tenure, use_container_width=True)
+        else:
+            st.info("No matching records.")
 
 row2_col1, row2_col2 = st.columns(2)
 
 with row2_col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📝 Contract Type vs Churn Count")
-    
-    if not df_filtered.empty:
-        contract_data = df_filtered.groupby(['Contract', 'Churn']).size().reset_index(name='Count')
-        fig_contract = px.bar(
-            contract_data,
-            x="Contract",
-            y="Count",
-            color="Churn",
-            barmode="group",
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"Count": "Customer Count"}
-        )
-        fig_contract.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=300,
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-        )
-        st.plotly_chart(fig_contract, use_container_width=True)
-    else:
-        st.info("No data.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("📝 Contract Type vs Churn Count")
+        
+        if not df_filtered.empty:
+            contract_data = df_filtered.groupby(['Contract', 'Churn']).size().reset_index(name='Count')
+            fig_contract = px.bar(
+                contract_data,
+                x="Contract",
+                y="Count",
+                color="Churn",
+                barmode="group",
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"Count": "Customer Count"}
+            )
+            fig_contract.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=300,
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            )
+            st.plotly_chart(fig_contract, use_container_width=True)
+        else:
+            st.info("No data.")
 
 with row2_col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("💵 Monthly Charges Distribution (Boxplot)")
-    
-    if not df_filtered.empty:
-        fig_charges = px.box(
-            df_filtered,
-            x="Churn",
-            y="MonthlyCharges",
-            color="Churn",
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"MonthlyCharges": "Monthly Charge ($)", "Churn": "Churn Status"}
-        )
-        fig_charges.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=300,
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-        )
-        st.plotly_chart(fig_charges, use_container_width=True)
-    else:
-        st.info("No data.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("💵 Monthly Charges Distribution (Boxplot)")
+        
+        if not df_filtered.empty:
+            fig_charges = px.box(
+                df_filtered,
+                x="Churn",
+                y="MonthlyCharges",
+                color="Churn",
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"MonthlyCharges": "Monthly Charge ($)", "Churn": "Churn Status"}
+            )
+            fig_charges.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=300,
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            )
+            st.plotly_chart(fig_charges, use_container_width=True)
+        else:
+            st.info("No data.")
 
 row3_col1, row3_col2 = st.columns(2)
 
 with row3_col1:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("📶 Internet Service Provider Type vs Churn")
-    
-    if not df_filtered.empty:
-        internet_data = df_filtered.groupby(['InternetService', 'Churn']).size().reset_index(name='Count')
-        fig_internet = px.bar(
-            internet_data,
-            x="InternetService",
-            y="Count",
-            color="Churn",
-            barmode="group",
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"Count": "Customer Count"}
-        )
-        fig_internet.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=300,
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
-        )
-        st.plotly_chart(fig_internet, use_container_width=True)
-    else:
-        st.info("No data.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.subheader("📶 Internet Service Provider Type vs Churn")
+        
+        if not df_filtered.empty:
+            internet_data = df_filtered.groupby(['InternetService', 'Churn']).size().reset_index(name='Count')
+            fig_internet = px.bar(
+                internet_data,
+                x="InternetService",
+                y="Count",
+                color="Churn",
+                barmode="group",
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"Count": "Customer Count"}
+            )
+            fig_internet.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=300,
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            )
+            st.plotly_chart(fig_internet, use_container_width=True)
+        else:
+            st.info("No data.")
 
 with row3_col2:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    st.subheader("💳 Churn Counts by Payment Method")
+    with st.container(border=True):
+        st.subheader("💳 Churn Counts by Payment Method")
+        
+        if not df_filtered.empty:
+            payment_data = df_filtered.groupby(['PaymentMethod', 'Churn']).size().reset_index(name='Count')
+            fig_payment = px.bar(
+                payment_data,
+                x="Count",
+                y="PaymentMethod",
+                color="Churn",
+                orientation='h',
+                color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
+                labels={"Count": "Customer Count", "PaymentMethod": "Payment Channel"}
+            )
+            fig_payment.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="#E2E8F0"),
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=300,
+                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+                yaxis=dict(showgrid=False)
+            )
+            st.plotly_chart(fig_payment, use_container_width=True)
+        else:
+            st.info("No data.")
+
+# Heatmap Row
+with st.container(border=True):
+    st.subheader("🔗 Correlation Heatmap (Continuous Variables)")
     
     if not df_filtered.empty:
-        payment_data = df_filtered.groupby(['PaymentMethod', 'Churn']).size().reset_index(name='Count')
-        fig_payment = px.bar(
-            payment_data,
-            x="Count",
-            y="PaymentMethod",
-            color="Churn",
-            orientation='h',
-            color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-            labels={"Count": "Customer Count", "PaymentMethod": "Payment Channel"}
-        )
-        fig_payment.update_layout(
+        df_corr = df_filtered.copy()
+        df_corr['Churn_Numeric'] = df_corr['Churn'].map({"Yes": 1, "No": 0})
+        numeric_cols = ['tenure', 'SeniorCitizen', 'MonthlyCharges', 'TotalCharges', 'Churn_Numeric']
+        
+        exist_numeric = [col for col in numeric_cols if col in df_corr.columns]
+        df_corr['TotalCharges'] = pd.to_numeric(df_corr['TotalCharges'], errors='coerce').fillna(0.0)
+        
+        corr = df_corr[exist_numeric].corr()
+        
+        fig_heatmap = go.Figure(data=go.Heatmap(
+            z=corr.values,
+            x=corr.columns,
+            y=corr.index,
+            colorscale='Viridis',
+            zmin=-1, zmax=1,
+            text=np.round(corr.values, 2),
+            texttemplate="%{text}",
+            hoverongaps=False
+        ))
+        fig_heatmap.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=300,
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=False)
+            margin=dict(l=10, r=10, t=30, b=10),
+            height=320
         )
-        st.plotly_chart(fig_payment, use_container_width=True)
+        st.plotly_chart(fig_heatmap, use_container_width=True)
     else:
-        st.info("No data.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Heatmap Row
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.subheader("🔗 Correlation Heatmap (Continuous Variables)")
-
-if not df_filtered.empty:
-    df_corr = df_filtered.copy()
-    df_corr['Churn_Numeric'] = df_corr['Churn'].map({"Yes": 1, "No": 0})
-    numeric_cols = ['tenure', 'SeniorCitizen', 'MonthlyCharges', 'TotalCharges', 'Churn_Numeric']
-    
-    exist_numeric = [col for col in numeric_cols if col in df_corr.columns]
-    df_corr['TotalCharges'] = pd.to_numeric(df_corr['TotalCharges'], errors='coerce').fillna(0.0)
-    
-    corr = df_corr[exist_numeric].corr()
-    
-    fig_heatmap = go.Figure(data=go.Heatmap(
-        z=corr.values,
-        x=corr.columns,
-        y=corr.index,
-        colorscale='Viridis',
-        zmin=-1, zmax=1,
-        text=np.round(corr.values, 2),
-        texttemplate="%{text}",
-        hoverongaps=False
-    ))
-    fig_heatmap.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="#E2E8F0"),
-        margin=dict(l=10, r=10, t=30, b=10),
-        height=320
-    )
-    st.plotly_chart(fig_heatmap, use_container_width=True)
-else:
-    st.info("No correlation data.")
-st.markdown('</div>', unsafe_allow_html=True)
+        st.info("No correlation data.")

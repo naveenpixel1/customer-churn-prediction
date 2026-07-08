@@ -35,23 +35,22 @@ if 'admin_authenticated' not in st.session_state:
     st.session_state.admin_authenticated = False
 
 if not st.session_state.admin_authenticated:
-    st.markdown('<div class="glass-card" style="max-width: 450px; margin: 40px auto 0 auto;">', unsafe_allow_html=True)
-    st.subheader("Login Access Required")
-    st.write("Enter credentials to unlock prediction history logs:")
-    
-    with st.form("admin_login_form"):
-        username = st.text_input("Username", value="")
-        password = st.text_input("Password", type="password", value="")
-        login_btn = st.form_submit_button("Authenticate Access", use_container_width=True)
+    with st.container(border=True):
+        st.subheader("Login Access Required")
+        st.write("Enter credentials to unlock prediction history logs:")
         
-    if login_btn:
-        if username == ENV_USER and password == ENV_PASS:
-            st.session_state.admin_authenticated = True
-            st.success("Access Granted.")
-            st.rerun()
-        else:
-            st.error("Invalid credentials. Please try again.")
-    st.markdown('</div>', unsafe_allow_html=True)
+        with st.form("admin_login_form"):
+            username = st.text_input("Username", value="")
+            password = st.text_input("Password", type="password", value="")
+            login_btn = st.form_submit_button("Authenticate Access", use_container_width=True)
+            
+        if login_btn:
+            if username == ENV_USER and password == ENV_PASS:
+                st.session_state.admin_authenticated = True
+                st.success("Access Granted.")
+                st.rerun()
+            else:
+                st.error("Invalid credentials. Please try again.")
     st.stop()
 
 # ----------------- ADMIN DASHBOARD CONTENT -----------------
@@ -86,54 +85,51 @@ with col3:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Filters section
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.subheader("🔍 Query & Search History")
-
-col_f1, col_f2 = st.columns([2, 1])
-with col_f1:
-    search_q = st.text_input("Search logs (e.g. payment method, gender, contract type)", "")
-with col_f2:
-    risk_filter = st.multiselect(
-        "Risk Class", 
-        options=["Low", "Medium", "High", "Critical"], 
-        default=["Low", "Medium", "High", "Critical"]
-    )
-
-# Apply filters
-df_filtered = df_history[df_history['risk_level'].isin(risk_filter)]
-
-if search_q:
-    search_cols = ["gender", "Contract", "PaymentMethod", "risk_level"]
-    mask = df_filtered[search_cols].astype(str).apply(lambda x: x.str.contains(search_q, case=False)).any(axis=1)
-    df_filtered = df_filtered[mask]
-
-st.markdown("---")
-
-# Render table
-if not df_filtered.empty:
-    display_cols = ["timestamp", "gender", "tenure", "Contract", "MonthlyCharges", "TotalCharges", "probability", "risk_level"]
-    st.dataframe(
-        df_filtered[display_cols].style.format({
-            "probability": "{:.1%}",
-            "MonthlyCharges": "${:.2f}",
-            "TotalCharges": "${:.2f}"
-        }),
-        use_container_width=True
-    )
+with st.container(border=True):
+    st.subheader("🔍 Query & Search History")
     
-    # Download log capability
-    csv_data = df_filtered.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Export Filtered Logs to CSV",
-        data=csv_data,
-        file_name="churn_logs_export.csv",
-        mime="text/csv"
-    )
-else:
-    st.info("No logged queries matching filters.")
-
-st.markdown('</div>', unsafe_allow_html=True)
+    col_f1, col_f2 = st.columns([2, 1])
+    with col_f1:
+        search_q = st.text_input("Search logs (e.g. payment method, gender, contract type)", "")
+    with col_f2:
+        risk_filter = st.multiselect(
+            "Risk Class", 
+            options=["Low", "Medium", "High", "Critical"], 
+            default=["Low", "Medium", "High", "Critical"]
+        )
+    
+    # Apply filters
+    df_filtered = df_history[df_history['risk_level'].isin(risk_filter)]
+    
+    if search_q:
+        search_cols = ["gender", "Contract", "PaymentMethod", "risk_level"]
+        mask = df_filtered[search_cols].astype(str).apply(lambda x: x.str.contains(search_q, case=False)).any(axis=1)
+        df_filtered = df_filtered[mask]
+    
+    st.markdown("---")
+    
+    # Render table
+    if not df_filtered.empty:
+        display_cols = ["timestamp", "gender", "tenure", "Contract", "MonthlyCharges", "TotalCharges", "probability", "risk_level"]
+        st.dataframe(
+            df_filtered[display_cols].style.format({
+                "probability": "{:.1%}",
+                "MonthlyCharges": "${:.2f}",
+                "TotalCharges": "${:.2f}"
+            }),
+            use_container_width=True
+        )
+        
+        # Download log capability
+        csv_data = df_filtered.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Export Filtered Logs to CSV",
+            data=csv_data,
+            file_name="churn_logs_export.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("No logged queries matching filters.")
 
 # Maintenance tools
 st.subheader("⚙️ Log Maintenance Tools")
