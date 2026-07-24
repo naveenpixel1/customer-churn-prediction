@@ -158,7 +158,27 @@ with st.container(border=True):
             st.success(f"System threshold set to {admin_threshold:.2f}")
             st.rerun()
 
+with st.container(border=True):
+    st.markdown("#### 🚀 Automated Pipeline Retraining & Cache Refresh")
+    st.markdown(
+        "Execute automated model retraining (benchmarking Logistic Regression, Decision Trees, Random Forests, and XGBoost with balanced class weights), "
+        "save updated `.pkl` model artifacts, and refresh application pipeline caches."
+    )
+    if st.button("🔄 Execute Automated Pipeline Retraining", use_container_width=True):
+        with st.spinner("Retraining candidate models (Logistic Regression, Decision Trees, Random Forests, XGBoost)..."):
+            try:
+                from src.retrain_pipeline import run_retraining_pipeline
+                summary = run_retraining_pipeline()
+                st.success(
+                    f"🎉 **Retraining Successful!** Top model: **{summary['best_model_name']}** "
+                    f"(ROC-AUC: **{summary['metrics']['ROC-AUC']:.4f}**, F1: **{summary['metrics']['F1-Score']:.4f}** across {summary['dataset_size']} rows)."
+                )
+                st.rerun()
+            except Exception as e:
+                st.error(f"Retraining failed: {e}")
+
 # Maintenance tools
+
 st.subheader("🛠️ Log Maintenance Tools")
 with st.expander("⚠️ Danger Zone Operations"):
     st.warning("These operations will permanently delete records from history databases.")

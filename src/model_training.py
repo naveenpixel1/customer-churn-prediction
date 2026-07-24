@@ -42,7 +42,8 @@ def preprocess_and_encode(df):
     df_encoded['Churn'] = df_encoded['Churn'].map({'Yes': 1, 'No': 0})
     
     # 2. Identify remaining multi-class categorical columns for One-Hot Encoding
-    categorical_cols = df_encoded.select_dtypes(include=['object']).columns.tolist()
+    categorical_cols = df_encoded.select_dtypes(include=['object', 'string']).columns.tolist()
+
     print(f"\nMulti-class columns for One-Hot Encoding: {categorical_cols}")
     
     # Apply One-Hot Encoding (drop_first=True to avoid multi-collinearity)
@@ -81,12 +82,17 @@ def split_and_scale(X, y):
     
     return X_train_scaled, X_test_scaled, y_train, y_test, scaler
 
+import xgboost as xgb
+
 def train_and_evaluate_models(X_train, X_test, y_train, y_test):
-    """Trains Logistic Regression, Decision Tree, and Random Forest. Returns comparisons."""
+    """Trains Logistic Regression, Decision Tree, Random Forest, and XGBoost with Class Imbalance Weighting."""
+    neg_pos_ratio = float((len(y_train) - sum(y_train)) / sum(y_train)) if sum(y_train) > 0 else 1.0
+    
     models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-        "Decision Tree": DecisionTreeClassifier(max_depth=6, random_state=42), # Restrict depth to avoid severe overfitting
-        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42) # Restrict depth for generalization
+        "Logistic Regression": LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42),
+        "Decision Tree": DecisionTreeClassifier(max_depth=6, class_weight='balanced', random_state=42),
+        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=10, class_weight='balanced', random_state=42),
+        "XGBoost": xgb.XGBClassifier(n_estimators=100, max_depth=5, scale_pos_weight=neg_pos_ratio, eval_metric='logloss', random_state=42)
     }
     
     results = {}
@@ -104,9 +110,9 @@ def train_and_evaluate_models(X_train, X_test, y_train, y_test):
         
         # Compute metrics
         acc = accuracy_score(y_test, y_pred)
-        prec = precision_score(y_test, y_pred)
-        rec = recall_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred)
+        prec = precision_score(y_test, y_pred, zero_division=0)
+        rec = recall_score(y_test, y_pred, zero_division=0)
+        f1 = f1_score(y_test, y_pred, zero_division=0)
         roc_auc = roc_auc_score(y_test, y_prob)
         
         results[name] = {
@@ -118,6 +124,7 @@ def train_and_evaluate_models(X_train, X_test, y_train, y_test):
         }
         
     return results, trained_models
+
 
 def main():
     processed_path = os.path.join("data", "processed", "churn_cleaned.csv")

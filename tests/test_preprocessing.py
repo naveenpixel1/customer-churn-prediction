@@ -95,3 +95,13 @@ def test_clean_data_handles_whitespace_and_tenure_imputation():
     assert df_cleaned['TotalCharges'].iloc[1] == 500.0
     assert df_cleaned.isnull().sum().sum() == 0
 
+def test_retrain_pipeline_runs():
+    from src.retrain_pipeline import run_retraining_pipeline
+    summary = run_retraining_pipeline()
+    assert 'best_model_name' in summary
+    assert summary['best_model_name'] in ['Logistic Regression', 'Decision Tree', 'Random Forest', 'XGBoost']
+    assert 'metrics' in summary
+    assert 'ROC-AUC' in summary['metrics']
+    assert summary['metrics']['ROC-AUC'] > 0.5
+
+
