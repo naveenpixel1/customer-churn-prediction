@@ -131,8 +131,35 @@ with st.container(border=True):
     else:
         st.info("No logged queries matching filters.")
 
+# System Configuration Tools
+st.subheader("⚙️ System & Model Configuration")
+with st.container(border=True):
+    st.markdown("#### 🎯 Global Decision Threshold Configuration")
+    st.markdown(
+        "Configure the system-wide decision threshold cut-off probability used across real-time churn predictions. "
+        "Targeting **0.30–0.35** optimizes Recall on imbalanced telecom datasets."
+    )
+    if 'decision_threshold' not in st.session_state:
+        st.session_state['decision_threshold'] = 0.35
+
+    col_t1, col_t2 = st.columns([3, 1])
+    with col_t1:
+        admin_threshold = st.slider(
+            "System Decision Threshold Cut-off",
+            min_value=0.10,
+            max_value=0.90,
+            value=float(st.session_state['decision_threshold']),
+            step=0.01
+        )
+    with col_t2:
+        st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+        if st.button("Apply Threshold", use_container_width=True):
+            st.session_state['decision_threshold'] = admin_threshold
+            st.success(f"System threshold set to {admin_threshold:.2f}")
+            st.rerun()
+
 # Maintenance tools
-st.subheader("⚙️ Log Maintenance Tools")
+st.subheader("🛠️ Log Maintenance Tools")
 with st.expander("⚠️ Danger Zone Operations"):
     st.warning("These operations will permanently delete records from history databases.")
     
@@ -155,3 +182,4 @@ with st.expander("⚠️ Danger Zone Operations"):
         history_service.clear_all()
         st.success("All prediction queries cleared successfully.")
         st.rerun()
+

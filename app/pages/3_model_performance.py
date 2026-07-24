@@ -82,18 +82,85 @@ except Exception as e:
     st.info("Check preprocessing or data directories.")
     st.stop()
 
+# Initialize session state for threshold
+if 'decision_threshold' not in st.session_state:
+    st.session_state['decision_threshold'] = 0.35
+
+with st.container(border=True):
+    st.subheader("⚙️ Interactive Decision Threshold Optimization")
+    st.markdown(
+        "Adjust the classification probability decision threshold below. Telecom churn datasets are imbalanced (~26% churners); "
+        "tuning the decision threshold down to **0.30–0.35** captures significantly more actual churners (higher Recall) without excessive false alarms."
+    )
+    selected_threshold = st.slider(
+        "Decision Threshold Cut-off",
+        min_value=0.10,
+        max_value=0.90,
+        value=float(st.session_state['decision_threshold']),
+        step=0.05,
+        help="Customers with a predicted churn probability >= this threshold are classified as Churners."
+    )
+    st.session_state['decision_threshold'] = selected_threshold
+
+# Dynamic threshold evaluation
+metrics = PredictionService.evaluate_threshold_metrics(y_true, y_prob, selected_threshold)
+baseline_metrics = PredictionService.evaluate_threshold_metrics(y_true, y_prob, 0.50)
+
 # Metric cards row
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    render_kpi_card("Accuracy Score", "80.62%", "#6C63FF")
+    render_kpi_card("Accuracy Score", f"{metrics['accuracy']:.2%}", "#6C63FF")
 with col2:
-    render_kpi_card("Precision Score", "65.93%", "#00D4AA")
+    render_kpi_card("Precision Score", f"{metrics['precision']:.2%}", "#00D4AA")
 with col3:
-    render_kpi_card("Recall (Sensitivity)", "55.88%", "#FFB347")
+    render_kpi_card("Recall (Sensitivity)", f"{metrics['recall']:.2%}", "#FFB347")
 with col4:
-    render_kpi_card("F1 Performance", "60.49%", "#6C63FF")
+    render_kpi_card("F1 Performance", f"{metrics['f1_score']:.2%}", "#6C63FF")
 with col5:
-    render_kpi_card("ROC Area Under (AUC)", "0.8422", "#00D4AA")
+    render_kpi_card("Decision Threshold", f"{selected_threshold:.2f}", "#FF6B6B" if selected_threshold != 0.50 else "#00D4AA")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Financial ROI Calculation Model
+clv = 1000.0 # Customer Lifetime Value
+retention_rate = 0.50 # 50% retention success
+campaign_cost_per_fp = 50.0 # $50 loyalty credit per false alarm
+
+saved_rev = metrics['tp'] * clv * retention_rate
+campaign_cost = metrics['fp'] * campaign_cost_per_fp
+net_savings = saved_rev - campaign_cost
+
+base_saved_rev = baseline_metrics['tp'] * clv * retention_rate
+base_campaign_cost = baseline_metrics['fp'] * campaign_cost_per_fp
+base_net_savings = base_saved_rev - base_campaign_cost
+
+net_diff = net_savings - base_net_savings
+
+# Business Impact Alert
+tp_diff = metrics['tp'] - baseline_metrics['tp']
+if tp_diff > 0:
+    st.success(
+        f"💡 **Threshold Optimization Alert**: Lowering threshold to **{selected_threshold:.2f}** captures **+{tp_diff} additional actual churners** "
+        f"(True Positives: {metrics['tp']} vs {baseline_metrics['tp']} baseline), boosting Recall from **{baseline_metrics['recall']:.2%}** to **{metrics['recall']:.2%}**!"
+    )
+elif tp_diff < 0:
+    st.warning(
+        f"💡 **Threshold Optimization Alert**: Higher threshold of **{selected_threshold:.2f}** increases Precision to **{metrics['precision']:.2%}**, "
+        f"but misses **{abs(tp_diff)} churners** compared to 0.50 baseline."
+    )
+else:
+    st.info("💡 Default 0.50 decision threshold active. Slide threshold to ~0.35 to catch more churners.")
+
+with st.container(border=True):
+    st.markdown("#### 💰 Simulated Financial Impact & ROI Model")
+    f_col1, f_col2, f_col3 = st.columns(3)
+    with f_col1:
+        st.metric("Retained Revenue Saved", f"${saved_rev:,.0f}", f"+${(saved_rev - base_saved_rev):,.0f} vs 0.50")
+    with f_col2:
+        st.metric("Campaign Overhead Cost", f"${campaign_cost:,.0f}", f"+${(campaign_cost - base_campaign_cost):,.0f} vs 0.50", delta_color="inverse")
+    with f_col3:
+        st.metric("Net Financial ROI", f"${net_savings:,.0f}", f"{'+$' if net_diff>=0 else '-$'}{abs(net_diff):,.0f} vs 0.50")
+
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -103,8 +170,7 @@ with row1_col1:
     with st.container(border=True):
         st.subheader("🏁 Live Confusion Matrix")
         
-        cm = confusion_matrix(y_true, y_pred)
-        tn, fp, fn, tp = cm.ravel()
+        tn, fp, fn, tp = metrics['tn'], metrics['fp'], metrics['fn'], metrics['tp']
         
         z_cm = [[int(tn), int(fp)], [int(fn), int(tp)]]
         x_cm = ['Predicted Stay', 'Predicted Churn']
@@ -127,18 +193,27 @@ with row1_col1:
             height=280
         )
         st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
-        st.caption("True Negative (TN: 927) | False Positive (FP: 108) | False Negative (FN: 165) | True Positive (TP: 209)")
+        st.caption(f"True Negative (TN: {tn}) | False Positive (FP: {fp}) | False Negative (FN: {fn}) | True Positive (TP: {tp})")
 
 with row1_col2:
     with st.container(border=True):
-        st.subheader("📈 ROC Curve Analysis")
+        st.subheader("📈 ROC Curve & Operating Point")
         
         fpr, tpr, thresholds = roc_curve(y_true, y_prob)
         roc_auc = auc(fpr, tpr)
         
+        curr_fpr = fp / (fp + tn) if (fp + tn) > 0 else 0
+        curr_tpr = metrics['recall']
+        
         fig_roc = go.Figure()
         fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC (AUC = {roc_auc:.4f})', line=dict(color='#00D4AA', width=2.5)))
         fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Baseline', line=dict(color='rgba(255,255,255,0.15)', dash='dash')))
+        fig_roc.add_trace(go.Scatter(
+            x=[curr_fpr], y=[curr_tpr],
+            mode='markers',
+            name=f'Threshold ({selected_threshold:.2f})',
+            marker=dict(color='#FF6B6B', size=12, symbol='star')
+        ))
         
         fig_roc.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -156,13 +231,19 @@ row2_col1, row2_col2 = st.columns(2)
 
 with row2_col1:
     with st.container(border=True):
-        st.subheader("⚖️ Precision-Recall Trade-off")
+        st.subheader("⚖️ Precision-Recall Operating Point")
         
         prec, rec, _ = precision_recall_curve(y_true, y_prob)
         ap = average_precision_score(y_true, y_prob)
         
         fig_pr = go.Figure()
         fig_pr.add_trace(go.Scatter(x=rec, y=prec, mode='lines', name=f'PR Curve (AP = {ap:.4f})', line=dict(color='#FFB347', width=2.5)))
+        fig_pr.add_trace(go.Scatter(
+            x=[metrics['recall']], y=[metrics['precision']],
+            mode='markers',
+            name=f'Threshold ({selected_threshold:.2f})',
+            marker=dict(color='#FF6B6B', size=12, symbol='star')
+        ))
         
         fig_pr.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -207,3 +288,4 @@ with row2_col2:
             yaxis=dict(showgrid=False)
         )
         st.plotly_chart(fig_imp, use_container_width=True, config={"displayModeBar": False})
+

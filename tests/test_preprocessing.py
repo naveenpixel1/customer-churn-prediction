@@ -77,3 +77,21 @@ def test_clean_data_imputes_missing_total_charges():
     assert df_cleaned['TotalCharges'].iloc[0] == 0.0
     assert df_cleaned['TotalCharges'].iloc[1] == 477.5
     assert df_cleaned['TotalCharges'].dtype == float
+
+def test_clean_data_handles_whitespace_and_tenure_imputation():
+    data = {
+        'customerID': ['  5 ', '6  '],
+        'gender': ['Male ', ' Female'],
+        'tenure': [10, 5],
+        'MonthlyCharges': [50.0, 100.0],
+        'TotalCharges': [' ', '  500.0  ']
+    }
+    df = pd.DataFrame(data)
+    df_cleaned = clean_data(df)
+    
+    assert df_cleaned['gender'].iloc[0] == 'Male'
+    assert df_cleaned['gender'].iloc[1] == 'Female'
+    assert df_cleaned['TotalCharges'].iloc[0] == 500.0
+    assert df_cleaned['TotalCharges'].iloc[1] == 500.0
+    assert df_cleaned.isnull().sum().sum() == 0
+

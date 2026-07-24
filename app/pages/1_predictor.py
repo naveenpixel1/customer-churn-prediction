@@ -22,6 +22,8 @@ from app.components.cards import render_verdict_card, render_insight_card
 from app.utils.validators import validate_numeric_inputs
 from app.utils.export import generate_csv_report, generate_text_report, generate_pdf_report
 from app.services.history_service import HistoryService
+from app.services.prediction_service import PredictionService
+
 
 # 1. Dynamic de-serialization wrapper cached via Streamlit
 @st.cache_resource
@@ -164,47 +166,23 @@ if st.button("🔮 Analyze Customer Risk Profile", use_container_width=True):
         input_df[num_cols] = scaler.transform(input_df[num_cols])
         input_df = input_df.astype(float)
         
-        # Execute Logistic Regression prediction
-        prediction = int(model.predict(input_df)[0])
-        probability = float(model.predict_proba(input_df)[0][1])
+        # Execute Prediction via PredictionService with active decision threshold
+        active_threshold = float(st.session_state.get('decision_threshold', 0.35))
+        pred_service = PredictionService()
+        result = pred_service.predict(input_data, threshold=active_threshold)
         
-        # Assess risk levels
-        if probability < 0.3:
-            risk_level = 'Low'
-        elif probability < 0.6:
-            risk_level = 'Medium'
-        elif probability < 0.8:
-            risk_level = 'High'
-        else:
-            risk_level = 'Critical'
-            
-        confidence_val = abs(probability - 0.5) * 2.0
-        confidence = 'High' if confidence_val > 0.7 else ('Moderate' if confidence_val > 0.3 else 'Low')
+        prediction = result['prediction']
+        probability = result['probability']
+        risk_level = result['risk_level']
+        confidence = result['confidence']
+        contributions = result['contributions']
         
-        # 4. RIGHT COLUMN EXPLAINABILITY: Calculate Log-Odds contributions (Weight * Scaled Input)
-        coefficients = model.coef_[0]
-        feature_vals = input_df.iloc[0].values
-        
-        contributions = {}
-        for name, coef, val in zip(feature_names, coefficients, feature_vals):
-            cont_val = float(coef * val)
-            if abs(cont_val) > 0.001:
-                contributions[name] = cont_val
-                
         # Sort features pushing toward churn (positive log-odds values)
         sorted_contributions = sorted(
             [(feat, val) for feat, val in contributions.items() if val > 0], 
             key=lambda x: x[1], 
             reverse=True
         )
-        
-        result = {
-            'prediction': prediction,
-            'probability': probability,
-            'risk_level': risk_level,
-            'confidence': confidence,
-            'contributions': dict(sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True))
-        }
         
         # Append record to csv history
         history_logger.append_record(input_data, result)
@@ -215,7 +193,8 @@ if st.button("🔮 Analyze Customer Risk Profile", use_container_width=True):
         st.session_state.last_result = result
         st.session_state.sorted_pos_contributions = sorted_contributions
 
-# ----------------- REAL-TIME DIAGNOSTIC PRESENTATION -----------------
+
+    # ----------------- REAL-TIME DIAGNOSTIC PRESENTATION -----------------
 if st.session_state.prediction_ran:
     inputs = st.session_state.last_inputs
     res = st.session_state.last_result
@@ -225,68 +204,166 @@ if st.session_state.prediction_ran:
     risk_level = res['risk_level']
     pred = res['prediction']
     conf = res['confidence']
+    thresh = res.get('threshold', 0.35)
     
     # Custom colored banner
     render_verdict_card(prob, risk_level, pred, conf)
+    st.caption(f"🎯 Operating Decision Threshold: **{thresh:.2f}** | Probability Cut-off for Churn Classification")
     
-    out_col1, out_col2 = st.columns(2)
-    
-    with out_col1:
-        with st.container(border=True):
-            st.subheader("🎯 Risk Score Assessment")
-            
-            # Premium color gauge plotting
-            fig_gauge = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=prob * 100,
-                domain={'x': [0, 1], 'y': [0, 1]},
-                gauge={
-                    'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#94A3B8"},
-                    'bar': {'color': "#6C63FF", 'thickness': 0.3},
-                    'bgcolor': "rgba(26, 29, 46, 0.5)",
-                    'borderwidth': 2,
-                    'bordercolor': "rgba(108, 99, 255, 0.2)",
-                    'steps': [
-                        {'range': [0, 30], 'color': 'rgba(0, 212, 170, 0.2)'},
-                        {'range': [30, 70], 'color': 'rgba(255, 179, 71, 0.2)'},
-                        {'range': [70, 100], 'color': 'rgba(255, 107, 107, 0.2)'}
-                    ],
-                    'threshold': {
-                        'line': {'color': "#FF6B6B", 'width': 4},
-                        'thickness': 0.75,
-                        'value': 70
-                    }
-                }
-            ))
-            fig_gauge.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=20, r=20, t=30, b=20),
-                height=250
-            )
-            st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False})
+    # Risk Score Assessment Container
+    with st.container(border=True):
+        st.subheader("🎯 Risk Score Assessment Gauge")
         
-    with out_col2:
+        # Premium color gauge plotting
+        fig_gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=prob * 100,
+            domain={'x': [0, 1], 'y': [0, 1]},
+            gauge={
+                'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#94A3B8"},
+                'bar': {'color': "#6C63FF", 'thickness': 0.3},
+                'bgcolor': "rgba(26, 29, 46, 0.5)",
+                'borderwidth': 2,
+                'bordercolor': "rgba(108, 99, 255, 0.2)",
+                'steps': [
+                    {'range': [0, 30], 'color': 'rgba(0, 212, 170, 0.2)'},
+                    {'range': [30, 70], 'color': 'rgba(255, 179, 71, 0.2)'},
+                    {'range': [70, 100], 'color': 'rgba(255, 107, 107, 0.2)'}
+                ],
+                'threshold': {
+                    'line': {'color': "#FF6B6B", 'width': 4},
+                    'thickness': 0.75,
+                    'value': thresh * 100
+                }
+            }
+        ))
+        fig_gauge.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color="#E2E8F0"),
+            margin=dict(l=20, r=20, t=30, b=20),
+            height=230
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True, config={"displayModeBar": False})
+
+    # 🔍 INDIVIDUAL RISK DRIVER ANALYSIS (2-COLUMN BREAKDOWN)
+    st.markdown("### 🔍 Individual Risk Driver Analysis")
+    st.markdown("Instance-level feature interpretability breakdown comparing top risk factors pushing towards churn (🔴) against protective factors supporting retention (🟢):")
+    
+    exp_data = res.get('explanation', {})
+    risk_drivers = exp_data.get('top_risk_drivers', [])
+    mitigating_drivers = exp_data.get('top_mitigating_drivers', [])
+    
+    col_risk, col_prot = st.columns(2)
+    
+    with col_risk:
         with st.container(border=True):
-            st.subheader("🧬 Local Churn Driver Contributions")
-            st.write("Top parameters contributing positively to customer attrition probability (Log-Odds weights):")
-            
-            # Display top 3 features driving churn
-            if sorted_pos:
-                for i, (feat, val) in enumerate(sorted_pos[:3]):
-                    clean_name = feat.replace('_', ' ').title()
+            st.markdown("<h4 style='color:#FF6B6B; margin-top:0;'>🔴 Top Churn Risk Drivers</h4>", unsafe_allow_html=True)
+            if risk_drivers:
+                for item in risk_drivers[:3]:
+                    label = item['label']
+                    pct = item['prob_impact_pct']
                     st.markdown(
                         f"""
-                        <div style="background: rgba(255, 107, 107, 0.05); border: 1px solid rgba(255, 107, 107, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-weight:600; color:#E2E8F0;">{i+1}. {clean_name}</span>
-                            <span style="color:#FF6B6B; font-weight:700;">+{val:.3f} log-odds</span>
+                        <div style="background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight:600; color:#E2E8F0;">🔴 {label}</span>
+                            <span style="color:#FF6B6B; font-weight:700; background: rgba(255, 107, 107, 0.2); padding: 3px 8px; border-radius: 4px;">+{pct:.1f}% churn risk</span>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
             else:
-                st.write("✓ No features are positively pushing this customer towards churn.")
+                st.info("✓ No significant parameters actively driving churn risk for this account.")
+                
+    with col_prot:
+        with st.container(border=True):
+            st.markdown("<h4 style='color:#00D4AA; margin-top:0;'>🟢 Protective / Retention Factors</h4>", unsafe_allow_html=True)
+            if mitigating_drivers:
+                for item in mitigating_drivers[:3]:
+                    label = item['label']
+                    pct = item['prob_impact_pct']
+                    st.markdown(
+                        f"""
+                        <div style="background: rgba(0, 212, 170, 0.08); border: 1px solid rgba(0, 212, 170, 0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight:600; color:#E2E8F0;">🟢 {label}</span>
+                            <span style="color:#00D4AA; font-weight:700; background: rgba(0, 212, 170, 0.2); padding: 3px 8px; border-radius: 4px;">{pct:.1f}% churn risk</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.info("✓ No strong protective features identified for this customer profile.")
+
+    # 5. WHAT-IF RETENTION STRATEGY SIMULATOR
+    with st.container(border=True):
+        st.subheader("🛠️ What-If Retention Strategy Simulator")
+        st.markdown(
+            "Simulate retention offers in real time (contract upgrades, add-ons, monthly discounts) "
+            "and observe the impact on customer churn risk probability."
+        )
+        
+        sim_col1, sim_col2 = st.columns([1, 1])
+        
+        with sim_col1:
+            st.markdown("##### ⚙️ Test Retention Offers")
+            current_contract = inputs.get('Contract', 'Month-to-month')
+            contract_opts = ["Month-to-month", "One year", "Two year"]
+            c_index = contract_opts.index(current_contract) if current_contract in contract_opts else 0
+            
+            sim_contract = st.selectbox(
+                "Contract Switch Offer", 
+                contract_opts, 
+                index=c_index
+            )
+            sim_tech_support = st.checkbox("Include Tech Support Add-on", value=(inputs.get('TechSupport') == 'Yes'))
+            sim_security = st.checkbox("Include Online Security Add-on", value=(inputs.get('OnlineSecurity') == 'Yes'))
+            sim_discount = st.slider("Monthly Billing Discount ($)", min_value=0.0, max_value=30.0, value=0.0, step=1.0)
+            
+        with sim_col2:
+            st.markdown("##### 📊 Real-Time Impact Assessment")
+            modifications = {
+                'Contract': sim_contract,
+                'TechSupport': 'Yes' if sim_tech_support else 'No',
+                'OnlineSecurity': 'Yes' if sim_security else 'No',
+                'MonthlyDiscount': sim_discount
+            }
+            
+            sim_res = pred_service.simulate_retention_impact(inputs, modifications, threshold=thresh)
+            
+            orig_p = sim_res['original_prob']
+            sim_p = sim_res['simulated_prob']
+            red_pct = sim_res['risk_reduction_pct']
+            
+            st.markdown(
+                f"""
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 16px; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #94A3B8;">🔴 Original Churn Risk:</span>
+                        <span style="font-weight: 700; color: #FF6B6B;">{orig_p:.1%}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #94A3B8;">🟢 Simulated Churn Risk:</span>
+                        <span style="font-weight: 700; color: {'#00D4AA' if sim_p < thresh else '#FFB347'};">{sim_p:.1%}</span>
+                    </div>
+                    <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: 600; color: #E2E8F0;">📉 Net Risk Reduction:</span>
+                        <span style="font-weight: 700; color: {'#00D4AA' if red_pct > 0 else '#94A3B8'};">-{red_pct:.1f}%</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            if sim_p < thresh:
+                st.success(f"🎉 **Retention Strategy Effective!** This offer drops churn risk to **{sim_p:.1%}** (below operating threshold {thresh:.2f}).")
+            elif red_pct > 5.0:
+                st.info(f"⚡ **Moderate Risk Reduction**: Churn risk decreased by **-{red_pct:.1f}%**, but remains above threshold.")
+            else:
+                st.caption("💡 Adjust sliders or select contract upgrades above to see risk reduction.")
+
+
         
     # 5. WHAT-IF / PRESCRIPTIVE ANALYTICS SECTION
     with st.container(border=True):
