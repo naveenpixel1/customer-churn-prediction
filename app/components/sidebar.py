@@ -2,6 +2,8 @@ import streamlit as st
 from app.utils.config import PORTFOLIO_TITLE, PROJECT_TYPE, DEVELOPER_NAME, MODEL_STATUS, MODEL_METRICS
 from app.utils.model_metadata import load_model_metadata
 
+from app.utils.currency import render_currency_selector
+
 def render_sidebar():
     metadata = load_model_metadata() or {}
     best_model_name = metadata.get("best_model_name", "Unknown")
@@ -16,6 +18,11 @@ def render_sidebar():
             unsafe_allow_html=True
         )
         st.markdown('<hr style="margin: 10px 0; border-color: #E2E8F0;">', unsafe_allow_html=True)
+        
+        # Currency Localization Selector (Item: Indian website / Currency switcher)
+        render_currency_selector()
+        st.markdown('<div style="margin-bottom: 12px;"></div>', unsafe_allow_html=True)
+        
         st.markdown(
             f'<div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px; margin-bottom: 12px; display: flex; align-items: center;">'
             f'<span style="width: 8px; height: 8px; border-radius: 50%; background: #0D9488; display: inline-block; margin-right: 10px; box-shadow: 0 0 6px #0D9488;"></span>'

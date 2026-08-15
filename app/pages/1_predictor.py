@@ -34,6 +34,7 @@ from app.utils.export import generate_csv_report, generate_text_report, generate
 from app.services.history_service import HistoryService
 from app.services.prediction_service import PredictionService
 from app.utils.security import validate_prediction_input, sanitize_html
+from app.utils.currency import format_currency, get_currency_symbol
 
 @st.cache_resource
 def load_ml_pipeline() -> Tuple[Any, Any, Any, Dict[str, Any]]:
@@ -103,6 +104,7 @@ with st.container():
 
     with col_acc:
         with st.container(border=True):
+            sym = get_currency_symbol()
             st.markdown('<h4 style="color:#D97706; margin-top:0; font-weight:700; font-size:16px;">Financials & Account</h4>', unsafe_allow_html=True)
             tenure = st.slider("Tenure (Active Months)", min_value=0, max_value=72, value=24)
             contract = st.selectbox("Contract Agreement Type", ["Month-to-month", "One year", "Two year"], index=0)
@@ -112,12 +114,12 @@ with st.container():
                 ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"],
                 index=0
             )
-            monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, max_value=200.0, value=95.0, step=1.0)
+            monthly_charges = st.number_input(f"Monthly Charges ({sym})", min_value=0.0, max_value=500.0, value=95.0, step=1.0)
             calculated_total = float(tenure * monthly_charges) if tenure > 0 else 0.0
             total_charges = st.number_input(
-                "Total Charges ($)",
+                f"Total Charges ({sym})",
                 min_value=0.0,
-                max_value=15000.0,
+                max_value=50000.0,
                 value=calculated_total,
                 step=10.0,
                 help="Estimated total lifetime charges based on tenure and monthly bill."
@@ -200,7 +202,7 @@ if st.session_state.prediction_ran:
                 </div>
                 <div style="text-align: right; background: #FFFFFF; padding: 10px 16px; border-radius: 10px; border: 1px solid #E2E8F0;">
                     <div style="font-size: 11px; color: #64748B; font-weight: 700;">PROJECTED CLV</div>
-                    <div style="font-size: 22px; font-weight: 800; color: #0F172A;">${clv_val:,.2f}</div>
+                    <div style="font-size: 22px; font-weight: 800; color: #0F172A;">{format_currency(clv_val)}</div>
                 </div>
             </div>
         </div>
@@ -230,7 +232,7 @@ if st.session_state.prediction_ran:
             sim_contract = st.selectbox("Contract Switch Offer", contract_opts, index=c_index)
             sim_tech_support = st.toggle("Add Premium Tech Support", value=(inputs.get('TechSupport') == 'Yes'))
             sim_security = st.toggle("Add Device Security", value=(inputs.get('OnlineSecurity') == 'Yes'))
-            sim_discount = st.slider("Monthly Billing Discount ($)", min_value=0.0, max_value=30.0, value=10.0, step=1.0)
+            sim_discount = st.slider(f"Monthly Billing Discount ({get_currency_symbol()})", min_value=0.0, max_value=50.0, value=10.0, step=1.0)
 
         with sim_col2:
             st.markdown('<div style="font-size: 14px; font-weight: 700; color: #0D9488; margin-bottom: 10px;">Simulated Risk Transition</div>', unsafe_allow_html=True)

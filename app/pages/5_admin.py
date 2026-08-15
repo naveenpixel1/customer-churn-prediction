@@ -27,6 +27,7 @@ from app.utils.security import (
     verify_honeypot,
     sanitize_html
 )
+from app.utils.currency import get_currency_symbol
 
 # Load environment variables
 load_dotenv()
@@ -150,12 +151,13 @@ with st.container(border=True):
     
     # Render table
     if not df_filtered.empty:
+        sym = get_currency_symbol()
         display_cols = ["timestamp", "gender", "tenure", "Contract", "MonthlyCharges", "TotalCharges", "probability", "risk_level"]
         st.dataframe(
             df_filtered[display_cols].style.format({
                 "probability": "{:.1%}",
-                "MonthlyCharges": "${:.2f}",
-                "TotalCharges": "${:.2f}"
+                "MonthlyCharges": f"{sym}{{:,.2f}}",
+                "TotalCharges": f"{sym}{{:,.2f}}"
             }),
             use_container_width=True
         )

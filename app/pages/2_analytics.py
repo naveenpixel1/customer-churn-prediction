@@ -21,6 +21,7 @@ import plotly.graph_objects as go
 from app.components.styles import inject_premium_styles
 from app.components.cards import render_kpi_card
 from app.services.analytics_service import AnalyticsService
+from app.utils.currency import format_currency, get_currency_symbol
 
 # Inject styling
 inject_premium_styles()
@@ -71,7 +72,7 @@ with kpi_col2:
 with kpi_col3:
     render_kpi_card("Avg Tenure Period", f"{kpis['avg_tenure']:.1f} months", "#FFB347", sparkline_data=[28.0, 29.5, 30.8, 31.5, kpis['avg_tenure']], icon='📅')
 with kpi_col4:
-    render_kpi_card("Avg Monthly Charge", f"${kpis['avg_monthly_charges']:.2f}", "#6C63FF", sparkline_data=[58.0, 60.5, 62.0, 63.8, kpis['avg_monthly_charges']], icon='💵')
+    render_kpi_card("Avg Monthly Charge", f"{format_currency(kpis['avg_monthly_charges'])}", "#6C63FF", sparkline_data=[58.0, 60.5, 62.0, 63.8, kpis['avg_monthly_charges']], icon='💵')
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -174,7 +175,7 @@ with row2_col2:
                 y="MonthlyCharges",
                 color="Churn",
                 color_discrete_map={"No": "#6C63FF", "Yes": "#FF6B6B"},
-                labels={"MonthlyCharges": "Monthly Charge ($)", "Churn": "Churn Status"}
+                labels={"MonthlyCharges": f"Monthly Charge ({get_currency_symbol()})", "Churn": "Churn Status"}
             )
             fig_charges.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',

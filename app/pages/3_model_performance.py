@@ -24,6 +24,7 @@ from app.components.styles import inject_premium_styles
 from app.components.cards import render_kpi_card
 from app.services.prediction_service import PredictionService
 from app.utils.config import CLEANED_DATA_PATH
+from app.utils.currency import format_currency, get_currency_symbol
 
 # Inject style
 inject_premium_styles()
@@ -216,12 +217,13 @@ else:
 with st.container(border=True):
     st.markdown("#### 💰 Simulated Financial Impact & ROI Model")
     f_col1, f_col2, f_col3 = st.columns(3)
+    sym = get_currency_symbol()
     with f_col1:
-        st.metric("Retained Revenue Saved", f"${saved_rev:,.0f}", f"+${(saved_rev - base_saved_rev):,.0f} vs 0.50")
+        st.metric("Retained Revenue Saved", f"{format_currency(saved_rev, decimals=0)}", f"+{format_currency(saved_rev - base_saved_rev, decimals=0)} vs 0.50")
     with f_col2:
-        st.metric("Campaign Overhead Cost", f"${campaign_cost:,.0f}", f"+${(campaign_cost - base_campaign_cost):,.0f} vs 0.50", delta_color="inverse")
+        st.metric("Campaign Overhead Cost", f"{format_currency(campaign_cost, decimals=0)}", f"+{format_currency(campaign_cost - base_campaign_cost, decimals=0)} vs 0.50", delta_color="inverse")
     with f_col3:
-        st.metric("Net Financial ROI", f"${net_savings:,.0f}", f"{'+$' if net_diff>=0 else '-$'}{abs(net_diff):,.0f} vs 0.50")
+        st.metric("Net Financial ROI", f"{format_currency(net_savings, decimals=0)}", f"{'+' if net_diff>=0 else '-'}{format_currency(abs(net_diff), decimals=0)} vs 0.50")
 
 
 st.markdown("<br>", unsafe_allow_html=True)

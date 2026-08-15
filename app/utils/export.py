@@ -3,6 +3,7 @@ from typing import Dict, Any
 from fpdf import FPDF
 import io
 from datetime import datetime
+from app.utils.currency import format_currency, get_currency_symbol, get_active_currency
 
 def generate_csv_report(input_data: Dict[str, Any], prediction_result: Dict[str, Any]) -> bytes:
     data = {}
@@ -38,8 +39,8 @@ def generate_text_report(input_data: Dict[str, Any], prediction_result: Dict[str
         f"  - Contract Type: {input_data.get('Contract')}\n",
         f"  - Paperless Billing: {input_data.get('PaperlessBilling')}\n",
         f"  - Payment Method: {input_data.get('PaymentMethod')}\n",
-        f"  - Monthly Spend: ${input_data.get('MonthlyCharges', 0.0):.2f}\n",
-        f"  - Total Spend: ${input_data.get('TotalCharges', 0.0):.2f}\n\n",
+        f"  - Monthly Spend: {format_currency(input_data.get('MonthlyCharges', 0.0))}\n",
+        f"  - Total Spend: {format_currency(input_data.get('TotalCharges', 0.0))}\n\n",
         "ACTIVE SERVICES:\n",
         "----------------\n",
         f"  - Phone Service: {input_data.get('PhoneService')}\n",
@@ -171,14 +172,17 @@ def generate_pdf_report(input_data: Dict[str, Any], prediction_result: Dict[str,
     pdf.cell(40, 6, 'Contract Type:', ln=False)
     pdf.cell(50, 6, f"{input_data.get('Contract')}", ln=True)
     
-    pdf.cell(40, 6, 'Payment Channel:', ln=False)
-    pdf.cell(50, 6, f"{input_data.get('PaymentMethod')}", ln=True)
+    curr_code = get_active_currency()
+    pdf_prefix = "Rs. " if curr_code == "INR" else (f"{curr_code} " if curr_code not in ["USD", "EUR", "GBP"] else get_currency_symbol())
+    
+    monthly_val = input_data.get('MonthlyCharges', 0.0)
+    total_val = input_data.get('TotalCharges', 0.0)
     
     pdf.cell(40, 6, 'Monthly Charges:', ln=False)
-    pdf.cell(50, 6, f"${input_data.get('MonthlyCharges', 0.0):.2f}", ln=True)
+    pdf.cell(50, 6, f"{pdf_prefix}{monthly_val:.2f}", ln=True)
     
     pdf.cell(40, 6, 'Total Charges:', ln=False)
-    pdf.cell(50, 6, f"${input_data.get('TotalCharges', 0.0):.2f}", ln=True)
+    pdf.cell(50, 6, f"{pdf_prefix}{total_val:.2f}", ln=True)
     
     end_y_1 = pdf.get_y()
     

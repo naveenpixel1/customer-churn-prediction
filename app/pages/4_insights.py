@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 from app.components.styles import inject_premium_styles
 from app.components.cards import render_insight_card
 from app.services.analytics_service import AnalyticsService
+from app.utils.currency import format_currency
 
 # Inject styling
 inject_premium_styles()
@@ -96,8 +97,8 @@ with col2:
 
     render_insight_card(
         "💵 Monthly Charges Price Sensitivity",
-        f"Higher monthly charges (> $70) increase churn risk significantly, showing a churn rate of <strong>{high_charges_churn:.1%}</strong>, "
-        f"compared to only <strong>{low_charges_churn:.1%}</strong> for customers with charges <= $70.",
+        f"Higher monthly charges (> {format_currency(70.0)}) increase churn risk significantly, showing a churn rate of <strong>{high_charges_churn:.1%}</strong>, "
+        f"compared to only <strong>{low_charges_churn:.1%}</strong> for customers with charges <= {format_currency(70.0)}.",
         "warning"
     )
     
@@ -201,12 +202,12 @@ st.markdown(
 )
 
 st.markdown(
-    """
+    f"""
     <div class="glass-card">
         <h4 style="margin-top:0; color:#0F172A; font-weight: 700;">3. Incentivize Auto-Pay Configurations (Priority: MEDIUM)</h4>
         <p style="color:#334155; font-size:14px; line-height:1.6;">
             Target customers using manual checks (specifically Electronic Check payment methods) with direct-mail or in-app billing prompts 
-            offering a one-time $5.00 statement credit for registering an automated Credit Card or Bank Transfer payment source. 
+            offering a one-time {format_currency(5.0)} statement credit for registering an automated Credit Card or Bank Transfer payment source. 
             This eliminates monthly transaction friction and dramatically improves lifetime value (LTV).
         </p>
     </div>
