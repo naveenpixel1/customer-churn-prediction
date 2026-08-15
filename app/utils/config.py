@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import json
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 MODEL_DIR = BASE_DIR / 'models'
@@ -11,12 +12,25 @@ HISTORY_FILE = DATA_DIR / 'history.csv'
 CLEANED_DATA_PATH = DATA_DIR / 'processed' / 'churn_cleaned.csv'
 RAW_DATA_PATH = DATA_DIR / 'raw' / 'WA_Fn-UseC_-Telco-Customer-Churn.csv'
 
+def _load_model_metrics():
+    metrics_file = MODEL_DIR / "metrics.json"
+    if metrics_file.exists():
+        try:
+            with open(metrics_file, "r") as f:
+                data = json.load(f)
+            return data.get("metrics", {})
+        except Exception:
+            pass
+    return {}
+
+_model_metrics = _load_model_metrics()
+
 MODEL_METRICS = {
-    'Accuracy': 0.8062,
-    'Precision': 0.6593,
-    'Recall': 0.5588,
-    'F1-Score': 0.6049,
-    'ROC-AUC': 0.8422
+    'Accuracy': _model_metrics.get('Accuracy', 0.0),
+    'Precision': _model_metrics.get('Precision', 0.0),
+    'Recall': _model_metrics.get('Recall', 0.0),
+    'F1-Score': _model_metrics.get('F1-Score', 0.0),
+    'ROC-AUC': _model_metrics.get('ROC-AUC', 0.0)
 }
 
 DEMOGRAPHIC_FEATURES = ['gender', 'SeniorCitizen', 'Partner', 'Dependents']

@@ -45,11 +45,20 @@ def run_retraining_pipeline() -> Dict[str, Any]:
         try:
             df_hist = pd.read_csv(history_path)
             if not df_hist.empty and 'Churn' in df_hist.columns:
-                common_cols = [c for c in df_cleaned.columns if c in df_hist.columns]
-                if len(common_cols) > 5:
+                required_cols = [
+                    'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure',
+                    'PhoneService', 'MultipleLines', 'InternetService', 'OnlineSecurity',
+                    'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
+                    'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod',
+                    'MonthlyCharges', 'TotalCharges', 'Churn'
+                ]
+                common_cols = [c for c in required_cols if c in df_cleaned.columns and c in df_hist.columns]
+                if len(common_cols) >= 10:
                     df_cleaned = pd.concat([df_cleaned, df_hist[common_cols]], ignore_index=True)
                     df_cleaned = df_cleaned.drop_duplicates()
                     logger.info(f"Integrated history logs into training dataset. Total rows: {len(df_cleaned)}")
+                else:
+                    logger.warning(f"Skipping history merge: only {len(common_cols)} required common columns found (need >= 10).")
         except Exception as e:
             logger.warning(f"Could not merge history logs: {e}")
             
@@ -80,6 +89,16 @@ def run_retraining_pipeline() -> Dict[str, Any]:
     joblib.dump(feature_names, os.path.join(model_dir, "feature_names.pkl"))
     joblib.dump(binary_mappings, os.path.join(model_dir, "label_encoder.pkl"))
     
+    metrics_path = os.path.join(model_dir, "metrics.json")
+    import json
+    metrics_payload = {
+        "best_model_name": best_model_name,
+        "metrics": best_metrics,
+        "dataset_size": len(df_cleaned),
+        "training_timestamp": pd.Timestamp.now().isoformat()
+    }
+    with open(metrics_path, "w") as f:
+        json.dump(metrics_payload, f, indent=2)
     logger.info("Saved updated model pipeline artifacts to models/")
     
     # 8. Clear Streamlit cache if running in Streamlit

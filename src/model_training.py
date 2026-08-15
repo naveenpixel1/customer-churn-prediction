@@ -62,8 +62,9 @@ def split_and_scale(X, y):
     # Scaler should only be fit on training set to avoid data leakage
     scaler = StandardScaler()
     
-    # continuous numerical features
-    num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+    # Continuous numerical features including derived interaction features
+    potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
+    num_cols = [c for c in potential_num_cols if c in X.columns]
     
     # Scale training numerical cols
     X_train_scaled = X_train.copy()
@@ -82,31 +83,48 @@ def split_and_scale(X, y):
     
     return X_train_scaled, X_test_scaled, y_train, y_test, scaler
 
+from sklearn.model_selection import GridSearchCV
 import xgboost as xgb
 
 def train_and_evaluate_models(X_train, X_test, y_train, y_test):
-    """Trains Logistic Regression, Decision Tree, Random Forest, and XGBoost with Class Imbalance Weighting."""
+    """Trains and hyperparameter tunes Logistic Regression, Decision Tree, Random Forest, and XGBoost via GridSearchCV."""
     neg_pos_ratio = float((len(y_train) - sum(y_train)) / sum(y_train)) if sum(y_train) > 0 else 1.0
     
-    models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42),
-        "Decision Tree": DecisionTreeClassifier(max_depth=6, class_weight='balanced', random_state=42),
-        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=10, class_weight='balanced', random_state=42),
-        "XGBoost": xgb.XGBClassifier(n_estimators=100, max_depth=5, scale_pos_weight=neg_pos_ratio, eval_metric='logloss', random_state=42)
+    model_grids = {
+        "Logistic Regression": (
+            LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42),
+            {'C': [0.1, 1.0, 10.0]}
+        ),
+        "Decision Tree": (
+            DecisionTreeClassifier(class_weight='balanced', random_state=42),
+            {'max_depth': [4, 6, 8], 'min_samples_split': [2, 5]}
+        ),
+        "Random Forest": (
+            RandomForestClassifier(class_weight='balanced', random_state=42),
+            {'n_estimators': [100, 150], 'max_depth': [8, 12], 'min_samples_split': [2, 5]}
+        ),
+        "XGBoost": (
+            xgb.XGBClassifier(scale_pos_weight=neg_pos_ratio, eval_metric='logloss', random_state=42),
+            {'n_estimators': [100, 150], 'max_depth': [3, 5], 'learning_rate': [0.05, 0.1]}
+        )
     }
     
     results = {}
     trained_models = {}
     
-    print("\n--- Training Models ---")
-    for name, model in models.items():
-        print(f"Training {name}...")
-        model.fit(X_train, y_train)
-        trained_models[name] = model
+    print("\n--- Training & Hyperparameter Tuning via GridSearchCV ---")
+    for name, (base_model, param_grid) in model_grids.items():
+        print(f"Optimizing {name} with GridSearchCV...")
+        grid = GridSearchCV(base_model, param_grid, cv=3, scoring='roc_auc', n_jobs=-1)
+        grid.fit(X_train, y_train)
+        
+        best_clf = grid.best_estimator_
+        trained_models[name] = best_clf
+        print(f"  Best params for {name}: {grid.best_params_}")
         
         # Predictions
-        y_pred = model.predict(X_test)
-        y_prob = model.predict_proba(X_test)[:, 1]
+        y_pred = best_clf.predict(X_test)
+        y_prob = best_clf.predict_proba(X_test)[:, 1]
         
         # Compute metrics
         acc = accuracy_score(y_test, y_pred)

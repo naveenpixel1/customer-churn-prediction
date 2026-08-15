@@ -8,7 +8,7 @@ from app.utils.config import CLEANED_DATA_PATH
 class AnalyticsService:
 
     @staticmethod
-    @st.cache_data
+    @st.cache_data(ttl=300)
     def load_dataset() -> pd.DataFrame:
         if not os.path.exists(CLEANED_DATA_PATH):
             raise FileNotFoundError(f"Cleaned dataset not found at: {CLEANED_DATA_PATH}. Run preprocessing first.")

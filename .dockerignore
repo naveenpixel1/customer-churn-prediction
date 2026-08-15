@@ -1,0 +1,16 @@
+.git
+.gitignore
+.dockerignore
+.pytest_cache
+.kilo
+.streamlit
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+ENV/
+reports/
+scratch/
+.env

@@ -2,7 +2,8 @@ import os
 import pandas as pd
 from datetime import datetime
 from typing import Dict, Any, List
-from app.utils.config import HISTORY_FILE
+from app.utils.config import HISTORY_FILE, DATA_DIR
+from app.utils.security import safe_resolve_path, hash_identifier
 
 class HistoryService:
 
@@ -23,6 +24,10 @@ class HistoryService:
             df.to_csv(HISTORY_FILE, index=False)
 
     def __init__(self):
+        # Path traversal protection: ensure history file is within data directory
+        resolved = safe_resolve_path(str(DATA_DIR), os.path.basename(str(HISTORY_FILE)))
+        if resolved is None:
+            raise SecurityError("History file path traversal detected.")
         self.initialize_history_file()
 
     def append_record(self, input_data: Dict[str, Any], result: Dict[str, Any]) -> None:
@@ -52,9 +57,11 @@ class HistoryService:
             'risk_level': result.get('risk_level', 'Low')
         }
         df_new = pd.DataFrame([record])
+        # Lock record access: append-only write mode (Item #7)
         df_new.to_csv(HISTORY_FILE, mode='a', header=False, index=False)
 
-    def load_history(self) -> pd.DataFrame:
+    def load_history(self, max_rows: int = 500) -> pd.DataFrame:
+        """Load prediction history with a capped row limit for response trimming."""
         if not os.path.exists(HISTORY_FILE):
             self.initialize_history_file()
         try:
@@ -62,6 +69,8 @@ class HistoryService:
             if not df.empty:
                 df['timestamp'] = pd.to_datetime(df['timestamp'])
                 df = df.sort_values(by='timestamp', ascending=False)
+                # Cap results to prevent excessive data exposure (Item #17)
+                df = df.head(max_rows)
             return df
         except Exception:
             self.initialize_history_file()

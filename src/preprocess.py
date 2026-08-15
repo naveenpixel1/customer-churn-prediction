@@ -86,7 +86,43 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     remaining_nans = df.isnull().sum().sum()
     print(f"Remaining missing values in dataset: {remaining_nans}")
     print("--- Data Cleaning Complete ---")
+    
+    # Engineer derived features
+    df = engineer_features(df)
+    
     print(f"Final shape: {df.shape[0]} rows, {df.shape[1]} columns")
+    return df
+
+def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Engineers derived domain-specific features:
+    1. Tenure_To_Monthly_Ratio: tenure / (MonthlyCharges + 1e-5)
+    2. TotalCharges_Per_Month: TotalCharges / (tenure + 1)
+    3. Service_Count: Total number of active add-on services subscribed
+    4. Has_Anchor_Service: Binary flag indicating active OnlineSecurity or TechSupport
+    """
+    df = df.copy()
+    print("\n--- Feature Engineering Phase ---")
+    
+    # 1. Tenure to Monthly Charges ratio
+    if 'tenure' in df.columns and 'MonthlyCharges' in df.columns:
+        df['Tenure_To_Monthly_Ratio'] = df['tenure'] / (df['MonthlyCharges'] + 1e-5)
+        
+    # 2. Total Charges per Month ratio
+    if 'TotalCharges' in df.columns and 'tenure' in df.columns:
+        df['TotalCharges_Per_Month'] = df['TotalCharges'] / (df['tenure'] + 1.0)
+        
+    # 3. Active add-on service count
+    service_cols = ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies']
+    active_cols = [c for c in service_cols if c in df.columns]
+    if active_cols:
+        df['Service_Count'] = df[active_cols].apply(lambda row: sum(1 for val in row if str(val).lower() in ['yes', '1', 1]), axis=1)
+        
+    # 4. Has anchor security/support service
+    if 'OnlineSecurity' in df.columns and 'TechSupport' in df.columns:
+        df['Has_Anchor_Service'] = ((df['OnlineSecurity'].astype(str).str.lower() == 'yes') | (df['TechSupport'].astype(str).str.lower() == 'yes')).astype(int)
+        
+    print(f"Engineered derived features. Total columns: {len(df.columns)}")
     return df
 
 

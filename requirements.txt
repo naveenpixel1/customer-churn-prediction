@@ -2,12 +2,14 @@ pandas
 numpy
 scikit-learn
 xgboost
+imbalanced-learn
+optuna
 matplotlib
 seaborn
 streamlit
 jupyter
 joblib
 fpdf2
+plotly
+python-dotenv
 pytest
-
-# Trigger Rebuild: 2026-07-04

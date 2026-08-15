@@ -1,15 +1,17 @@
 import os
 import sys
 
-# Ensure root directory is in python path to resolve 'app' imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-while current_dir and not os.path.exists(os.path.join(current_dir, 'app')):
-    parent = os.path.dirname(current_dir)
-    if parent == current_dir:
+# Ensure project root is in sys.path
+_current = os.path.dirname(os.path.abspath(__file__))
+while _current and _current != os.path.dirname(_current):
+    if os.path.exists(os.path.join(_current, "app")):
+        if _current not in sys.path:
+            sys.path.insert(0, _current)
         break
-    current_dir = parent
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+    _current = os.path.dirname(_current)
+
+from app.utils.bootstrap import ensure_project_root_in_path
+ensure_project_root_in_path()
 
 import streamlit as st
 import pandas as pd
@@ -17,6 +19,14 @@ from dotenv import load_dotenv
 from app.components.styles import inject_premium_styles
 from app.components.cards import render_kpi_card
 from app.services.history_service import HistoryService
+from app.utils.security import (
+    verify_admin_credentials,
+    check_rate_limit,
+    record_failed_login,
+    reset_login_attempts,
+    verify_honeypot,
+    sanitize_html
+)
 
 # Load environment variables
 load_dotenv()
@@ -26,31 +36,53 @@ inject_premium_styles()
 
 st.markdown("<h1 class='glowing-title gradient-text'>🔐 Admin Console</h1>", unsafe_allow_html=True)
 
-# Authentication configurations from env (fallback values provided for portfolio showcase)
-ENV_USER = os.getenv("ADMIN_USER", "naveen")
-ENV_PASS = os.getenv("ADMIN_PASS", "naveen@0104")
-
 # Session state authentication logic
 if 'admin_authenticated' not in st.session_state:
     st.session_state.admin_authenticated = False
+if 'login_attempts' not in st.session_state:
+    st.session_state.login_attempts = 0
+if 'lockout_until' not in st.session_state:
+    st.session_state.lockout_until = 0
 
 if not st.session_state.admin_authenticated:
     with st.container(border=True):
         st.subheader("Login Access Required")
         st.write("Enter credentials to unlock prediction history logs:")
         
+        # Rate limiting check
+        is_allowed, lockout_msg = check_rate_limit(st.session_state)
+        if not is_allowed:
+            st.error(f"🔒 {lockout_msg}")
+            st.stop()
+        
         with st.form("admin_login_form"):
             username = st.text_input("Username", value="")
             password = st.text_input("Password", type="password", value="")
+            # Honeypot field (hidden from real users via CSS, bots will fill it)
+            honeypot = st.text_input("Leave this field empty", value="", key="hp_field",
+                                      label_visibility="collapsed")
             login_btn = st.form_submit_button("Authenticate Access", use_container_width=True)
             
         if login_btn:
-            if username == ENV_USER and password == ENV_PASS:
+            # Bot detection via honeypot
+            if not verify_honeypot(honeypot):
+                st.error("Access denied.")
+                st.stop()
+            
+            # Fail-closed credential verification with constant-time comparison
+            if verify_admin_credentials(username, password):
+                reset_login_attempts(st.session_state)
                 st.session_state.admin_authenticated = True
                 st.success("Access Granted.")
                 st.rerun()
             else:
-                st.error("Invalid credentials. Please try again.")
+                attempts = record_failed_login(st.session_state)
+                remaining = 5 - attempts
+                if remaining > 0:
+                    st.error(f"Invalid credentials. {remaining} attempt(s) remaining.")
+                else:
+                    st.error("Too many failed attempts. Account temporarily locked.")
+                    st.rerun()
     st.stop()
 
 # ----------------- ADMIN DASHBOARD CONTENT -----------------
@@ -102,9 +134,17 @@ with st.container(border=True):
     df_filtered = df_history[df_history['risk_level'].isin(risk_filter)]
     
     if search_q:
+        # Sanitize search input: use regex=False to prevent injection
+        safe_query = sanitize_html(search_q)
         search_cols = ["gender", "Contract", "PaymentMethod", "risk_level"]
-        mask = df_filtered[search_cols].astype(str).apply(lambda x: x.str.contains(search_q, case=False)).any(axis=1)
+        mask = df_filtered[search_cols].astype(str).apply(
+            lambda x: x.str.contains(search_q, case=False, regex=False)
+        ).any(axis=1)
         df_filtered = df_filtered[mask]
+    
+    # Cap results to prevent excessive data exposure (Item #17)
+    MAX_DISPLAY_ROWS = 100
+    df_filtered = df_filtered.head(MAX_DISPLAY_ROWS)
     
     st.markdown("---")
     

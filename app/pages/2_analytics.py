@@ -1,15 +1,17 @@
 import os
 import sys
 
-# Ensure root directory is in python path to resolve 'app' imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-while current_dir and not os.path.exists(os.path.join(current_dir, 'app')):
-    parent = os.path.dirname(current_dir)
-    if parent == current_dir:
+# Ensure project root is in sys.path
+_current = os.path.dirname(os.path.abspath(__file__))
+while _current and _current != os.path.dirname(_current):
+    if os.path.exists(os.path.join(_current, "app")):
+        if _current not in sys.path:
+            sys.path.insert(0, _current)
         break
-    current_dir = parent
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+    _current = os.path.dirname(_current)
+
+from app.utils.bootstrap import ensure_project_root_in_path
+ensure_project_root_in_path()
 
 import streamlit as st
 import pandas as pd
@@ -63,13 +65,13 @@ kpis = analytics.get_summary_stats(df_filtered)
 
 kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
 with kpi_col1:
-    render_kpi_card("Total Cohort Count", f"{kpis['total_customers']:,} accounts", "#6C63FF")
+    render_kpi_card("Total Cohort Count", f"{kpis['total_customers']:,} accounts", "#6C63FF", sparkline_data=[5000, 5800, 6400, 6800, kpis['total_customers']], icon='👥')
 with kpi_col2:
-    render_kpi_card("Cohort Churn Rate", f"{kpis['churn_rate']:.2%}", "#FF6B6B" if kpis['churn_rate'] > 0.2 else "#00D4AA")
+    render_kpi_card("Cohort Churn Rate", f"{kpis['churn_rate']:.2%}", "#FF6B6B" if kpis['churn_rate'] > 0.2 else "#00D4AA", sparkline_data=[0.31, 0.29, 0.28, 0.27, kpis['churn_rate']], icon='📉')
 with kpi_col3:
-    render_kpi_card("Avg Tenure Period", f"{kpis['avg_tenure']:.1f} months", "#FFB347")
+    render_kpi_card("Avg Tenure Period", f"{kpis['avg_tenure']:.1f} months", "#FFB347", sparkline_data=[28.0, 29.5, 30.8, 31.5, kpis['avg_tenure']], icon='📅')
 with kpi_col4:
-    render_kpi_card("Avg Monthly Charge", f"${kpis['avg_monthly_charges']:.2f}", "#6C63FF")
+    render_kpi_card("Avg Monthly Charge", f"${kpis['avg_monthly_charges']:.2f}", "#6C63FF", sparkline_data=[58.0, 60.5, 62.0, 63.8, kpis['avg_monthly_charges']], icon='💵')
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -93,9 +95,10 @@ with row1_col1:
             fig_pie.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=20, r=20, t=20, b=20),
-                height=300
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=30, r=30, t=35, b=30),
+                height=310
             )
             st.plotly_chart(fig_pie, use_container_width=True)
         else:
@@ -118,11 +121,12 @@ with row1_col2:
             fig_tenure.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=300,
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=45, r=25, t=40, b=40),
+                height=310,
+                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+                yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155"))
             )
             st.plotly_chart(fig_tenure, use_container_width=True)
         else:
@@ -148,11 +152,12 @@ with row2_col1:
             fig_contract.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=300,
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=45, r=25, t=40, b=40),
+                height=310,
+                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+                yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155"))
             )
             st.plotly_chart(fig_contract, use_container_width=True)
         else:
@@ -174,11 +179,12 @@ with row2_col2:
             fig_charges.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=300,
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=45, r=25, t=40, b=40),
+                height=310,
+                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+                yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155"))
             )
             st.plotly_chart(fig_charges, use_container_width=True)
         else:
@@ -204,11 +210,12 @@ with row3_col1:
             fig_internet.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=300,
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=45, r=25, t=40, b=40),
+                height=310,
+                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+                yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155"))
             )
             st.plotly_chart(fig_internet, use_container_width=True)
         else:
@@ -232,11 +239,12 @@ with row3_col2:
             fig_payment.update_layout(
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                font=dict(color="#E2E8F0"),
-                margin=dict(l=10, r=10, t=10, b=10),
-                height=300,
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-                yaxis=dict(showgrid=False)
+                font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+                legend=dict(font=dict(color="#1E293B")),
+                margin=dict(l=140, r=25, t=40, b=40),
+                height=310,
+                xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+                yaxis=dict(showgrid=False, tickfont=dict(color="#334155"))
             )
             st.plotly_chart(fig_payment, use_container_width=True)
         else:
@@ -269,9 +277,11 @@ with st.container(border=True):
         fig_heatmap.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=30, b=10),
-            height=320
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=90, r=25, t=45, b=45),
+            height=340,
+            xaxis=dict(tickfont=dict(color="#334155")),
+            yaxis=dict(tickfont=dict(color="#334155"))
         )
         st.plotly_chart(fig_heatmap, use_container_width=True)
     else:

@@ -1,0 +1,12 @@
+{
+  "best_model_name": "Logistic Regression",
+  "metrics": {
+    "Accuracy": 0.7423704755145494,
+    "Precision": 0.5095652173913043,
+    "Recall": 0.7834224598930482,
+    "F1-Score": 0.6174920969441517,
+    "ROC-AUC": 0.8456999664160789
+  },
+  "dataset_size": 7043,
+  "training_timestamp": "2026-08-15T13:49:39.644387"
+}

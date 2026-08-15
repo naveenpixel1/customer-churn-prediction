@@ -1,15 +1,17 @@
 import os
 import sys
 
-# Ensure root directory is in python path to resolve 'app' imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-while current_dir and not os.path.exists(os.path.join(current_dir, 'app')):
-    parent = os.path.dirname(current_dir)
-    if parent == current_dir:
+# Ensure project root is in sys.path
+_current = os.path.dirname(os.path.abspath(__file__))
+while _current and _current != os.path.dirname(_current):
+    if os.path.exists(os.path.join(_current, "app")):
+        if _current not in sys.path:
+            sys.path.insert(0, _current)
         break
-    current_dir = parent
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+    _current = os.path.dirname(_current)
+
+from app.utils.bootstrap import ensure_project_root_in_path
+ensure_project_root_in_path()
 
 import streamlit as st
 import pandas as pd
@@ -113,7 +115,7 @@ chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
     with st.container(border=True):
-        st.markdown("<h4 style='margin-top:0; color:#FFFFFF;'>📝 Churn Risk by Contract Type</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; color:#0F172A;'>📝 Churn Risk by Contract Type</h4>", unsafe_allow_html=True)
         # Calculate risk rates
         contract_order = ["Month-to-month", "One year", "Two year"]
         rates = [df[df['Contract'] == c]['Churn'].value_counts(normalize=True).get('Yes', 0.0) * 100 for c in contract_order]
@@ -123,23 +125,23 @@ with chart_col1:
             orientation='h',
             marker=dict(
                 color=['#FF6B6B', '#FFB347', '#00D4AA'],
-                line=dict(color='rgba(255,255,255,0.05)', width=1)
+                line=dict(color='#E2E8F0', width=1)
             )
         ))
         fig_c.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=150,
-            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=False)
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=20, r=20, t=35, b=25),
+            height=180,
+            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+            yaxis=dict(showgrid=False, tickfont=dict(color="#334155"))
         )
         st.plotly_chart(fig_c, use_container_width=True, config={"displayModeBar": False})
 
 with chart_col2:
     with st.container(border=True):
-        st.markdown("<h4 style='margin-top:0; color:#FFFFFF;'>💳 Churn Risk by Payment Channel</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; color:#0F172A;'>💳 Churn Risk by Payment Channel</h4>", unsafe_allow_html=True)
         pm_methods = ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"]
         rates_pm = [df[df['PaymentMethod'] == p]['Churn'].value_counts(normalize=True).get('Yes', 0.0) * 100 for p in pm_methods]
         
@@ -154,17 +156,17 @@ with chart_col2:
             orientation='h',
             marker=dict(
                 color=['#00D4AA', '#00D4AA', '#FFB347', '#FF6B6B'],
-                line=dict(color='rgba(255,255,255,0.05)', width=1)
+                line=dict(color='#E2E8F0', width=1)
             )
         ))
         fig_p.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=150,
-            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=False)
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=20, r=20, t=35, b=25),
+            height=180,
+            xaxis=dict(title="Churn Rate (%)", showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+            yaxis=dict(showgrid=False, tickfont=dict(color="#334155"))
         )
         st.plotly_chart(fig_p, use_container_width=True, config={"displayModeBar": False})
 
@@ -174,8 +176,8 @@ st.subheader("💡 Strategic Action Playbooks")
 st.markdown(
     """
     <div class="glass-card">
-        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">1. Migrate Month-to-Month Cohorts to Annual Terms (Priority: CRITICAL)</h4>
-        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+        <h4 style="margin-top:0; color:#0F172A; font-weight: 700;">1. Migrate Month-to-Month Cohorts to Annual Terms (Priority: CRITICAL)</h4>
+        <p style="color:#334155; font-size:14px; line-height:1.6;">
             Since month-to-month status is the highest risk marker, implement automated marketing incentives offering 
             a billing discount (e.g. 10-15% discount for 12 months) in exchange for switching to a 1 or 2-year contract. 
             The cost of the promotion is far lower than customer replacement acquisition costs.
@@ -188,8 +190,8 @@ st.markdown(
 st.markdown(
     f"""
     <div class="glass-card">
-        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">2. Bundle Online Security and Tech Support Features (Priority: HIGH)</h4>
-        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+        <h4 style="margin-top:0; color:#0F172A; font-weight: 700;">2. Bundle Online Security and Tech Support Features (Priority: HIGH)</h4>
+        <p style="color:#334155; font-size:14px; line-height:1.6;">
             Subscribers with active Online Security and Tech Support add-ons demonstrate high retention rates (only <b>{yes_security_churn:.1%}</b> churn rate vs <b>{no_security_churn:.1%}</b> for those without). 
             Offer a promotional bundle (e.g., first 3 months of security and tech support free) to month-to-month or new subscribers to anchor their accounts.
         </p>
@@ -201,8 +203,8 @@ st.markdown(
 st.markdown(
     """
     <div class="glass-card">
-        <h4 style="margin-top:0; color:#FFFFFF; font-weight: 700;">3. Incentivize Auto-Pay Configurations (Priority: MEDIUM)</h4>
-        <p style="color:#CBD5E1; font-size:14px; line-height:1.5;">
+        <h4 style="margin-top:0; color:#0F172A; font-weight: 700;">3. Incentivize Auto-Pay Configurations (Priority: MEDIUM)</h4>
+        <p style="color:#334155; font-size:14px; line-height:1.6;">
             Target customers using manual checks (specifically Electronic Check payment methods) with direct-mail or in-app billing prompts 
             offering a one-time $5.00 statement credit for registering an automated Credit Card or Bank Transfer payment source. 
             This eliminates monthly transaction friction and dramatically improves lifetime value (LTV).

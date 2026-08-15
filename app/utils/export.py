@@ -2,6 +2,7 @@ import pandas as pd
 from typing import Dict, Any
 from fpdf import FPDF
 import io
+from datetime import datetime
 
 def generate_csv_report(input_data: Dict[str, Any], prediction_result: Dict[str, Any]) -> bytes:
     data = {}
@@ -26,7 +27,7 @@ def generate_text_report(input_data: Dict[str, Any], prediction_result: Dict[str
         "======================================================================\n",
         "CUSTOMER CHURN DIAGNOSTIC REPORT\n",
         "======================================================================\n",
-        "Generated: 2026-07-08\n\n",
+        f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n",
         "CUSTOMER PROFILE:\n",
         "-----------------\n",
         f"  - Gender: {input_data.get('gender')}\n",

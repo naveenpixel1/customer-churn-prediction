@@ -6,6 +6,7 @@ import streamlit as st
 import logging
 from typing import Dict, Any, Tuple
 from app.utils.config import MODEL_DIR
+from app.utils.security import validate_prediction_input
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
@@ -43,7 +44,11 @@ FEATURE_LABEL_MAP = {
     'PaymentMethod_Credit card (automatic)': 'Automatic Credit Card Pay',
     'PaymentMethod_Electronic check': 'Electronic Check Payment',
     'PaymentMethod_Mailed check': 'Mailed Check Payment',
-    'gender': 'Gender Profile'
+    'gender': 'Gender Profile',
+    'Tenure_To_Monthly_Ratio': 'Tenure to Monthly Ratio',
+    'TotalCharges_Per_Month': 'Historical Total Charges per Month',
+    'Service_Count': 'Total Active Service Add-ons',
+    'Has_Anchor_Service': 'Has Anchor Security/Tech Support'
 }
 
 def sigmoid(z: float) -> float:
@@ -57,35 +62,58 @@ def explain_customer_prediction(
 ) -> Dict[str, Any]:
     """
     Calculates instance-level feature contributions using Logistic Regression Log-Odds Impact
-    and converts them to approximate percentage point probability impacts (ΔP_i).
+    or Tree Feature Importances, converting them to percentage point probability impacts (ΔP_i).
     """
-    coefficients = model.coef_[0]
-    intercept = model.intercept_[0]
-    
-    feature_vals = input_df.iloc[0].values
-    log_odds_impacts = coefficients * feature_vals
-    logit_total = float(np.sum(log_odds_impacts) + intercept)
-    prob_total = float(sigmoid(logit_total))
-    
-    explanations = []
-    for col, coef, val, impact in zip(feature_names, coefficients, feature_vals, log_odds_impacts):
-        if abs(val) < 1e-6 and abs(impact) < 1e-6:
-            continue
+    if hasattr(model, 'coef_'):
+        coefficients = model.coef_[0]
+        intercept = getattr(model, 'intercept_', [0.0])[0]
+        feature_vals = input_df.iloc[0].values
+        log_odds_impacts = coefficients * feature_vals
+        logit_total = float(np.sum(log_odds_impacts) + intercept)
+        prob_total = float(sigmoid(logit_total))
+        
+        explanations = []
+        for col, coef, val, impact in zip(feature_names, coefficients, feature_vals, log_odds_impacts):
+            if abs(val) < 1e-6 and abs(impact) < 1e-6:
+                continue
+                
+            prob_without_i = sigmoid(logit_total - impact)
+            delta_p = prob_total - prob_without_i
+            delta_p_pct = float(delta_p * 100.0)
             
-        prob_without_i = sigmoid(logit_total - impact)
-        delta_p = prob_total - prob_without_i
-        delta_p_pct = float(delta_p * 100.0)
-        
-        label = FEATURE_LABEL_MAP.get(col, col.replace('_', ' ').title())
-        
-        explanations.append({
-            'feature_raw': col,
-            'label': label,
-            'value': float(val),
-            'coefficient': float(coef),
-            'log_odds_impact': float(impact),
-            'prob_impact_pct': delta_p_pct
-        })
+            label = FEATURE_LABEL_MAP.get(col, col.replace('_', ' ').title())
+            
+            explanations.append({
+                'feature_raw': col,
+                'label': label,
+                'value': float(val),
+                'coefficient': float(coef),
+                'log_odds_impact': float(impact),
+                'prob_impact_pct': delta_p_pct
+            })
+    elif hasattr(model, 'feature_importances_'):
+        importances = model.feature_importances_
+        prob_total = float(model.predict_proba(input_df)[0][1])
+        feature_vals = input_df.iloc[0].values
+        logit_total = 0.0
+        explanations = []
+        for col, imp, val in zip(feature_names, importances, feature_vals):
+            if abs(val) < 1e-6 and abs(imp) < 1e-6:
+                continue
+            label = FEATURE_LABEL_MAP.get(col, col.replace('_', ' ').title())
+            delta_p_pct = float(imp * val * 100.0 * (1 if val > 0 else -1))
+            explanations.append({
+                'feature_raw': col,
+                'label': label,
+                'value': float(val),
+                'coefficient': float(imp),
+                'log_odds_impact': float(imp * val),
+                'prob_impact_pct': delta_p_pct
+            })
+    else:
+        prob_total = float(model.predict_proba(input_df)[0][1])
+        logit_total = 0.0
+        explanations = []
         
     risk_drivers = sorted([e for e in explanations if e['prob_impact_pct'] > 0.01], key=lambda x: x['prob_impact_pct'], reverse=True)
     mitigating_drivers = sorted([e for e in explanations if e['prob_impact_pct'] < -0.01], key=lambda x: x['prob_impact_pct'])
@@ -120,8 +148,17 @@ class PredictionService:
 
     def __init__(self):
         self.model, self.scaler, self.feature_names, self.binary_mappings = self.load_pipeline()
+        
+        missing_labels = [f for f in self.feature_names if f not in FEATURE_LABEL_MAP]
+        if missing_labels:
+            logger.warning(f"FEATURE_LABEL_MAP is missing entries for: {missing_labels}")
 
     def predict(self, input_data: Dict[str, Any], threshold: float = 0.35) -> Dict[str, Any]:
+        # 0. Server-side input validation (Item #8, #14)
+        is_valid, error_msg = validate_prediction_input(input_data)
+        if not is_valid:
+            raise ValueError(f"Input validation failed: {error_msg}")
+
         # 1. Create DataFrame
         input_df = pd.DataFrame([input_data])
 
@@ -134,6 +171,18 @@ class PredictionService:
         if 'SeniorCitizen' in input_df.columns:
             if isinstance(input_df['SeniorCitizen'].iloc[0], str):
                 input_df['SeniorCitizen'] = 1 if input_df['SeniorCitizen'].iloc[0] == 'Senior Citizen' else 0
+
+        # 3b. Engineer derived features
+        monthly = float(input_data.get('MonthlyCharges', 0.0))
+        tenure = float(input_data.get('tenure', 0.0))
+        total_chg = float(input_data.get('TotalCharges', monthly * tenure))
+        
+        input_df['Tenure_To_Monthly_Ratio'] = tenure / (monthly + 1e-5)
+        input_df['TotalCharges_Per_Month'] = total_chg / (tenure + 1.0)
+        
+        service_cols = ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies']
+        input_df['Service_Count'] = sum(1 for c in service_cols if str(input_data.get(c, '')).lower() in ['yes', '1', 1])
+        input_df['Has_Anchor_Service'] = 1 if (str(input_data.get('OnlineSecurity', '')).lower() == 'yes' or str(input_data.get('TechSupport', '')).lower() == 'yes') else 0
 
         # 4. Apply One-Hot Encoding to Multi-class Categorical columns
         categorical_cols = [
@@ -149,12 +198,18 @@ class PredictionService:
         input_df = input_df.reindex(columns=self.feature_names, fill_value=0)
 
         # 6. Scale Numerical features
-        num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+        potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
+        num_cols = [c for c in potential_num_cols if c in input_df.columns]
         input_df[num_cols] = self.scaler.transform(input_df[num_cols])
         input_df = input_df.astype(float)
 
         # 7. Model Inference with custom decision threshold
         probability = float(self.model.predict_proba(input_df)[0][1])
+        
+        # Domain rule: Brand new customers (tenure = 0) on multi-year/annual contracts with auto-pay/security are low risk
+        if tenure == 0 and input_data.get('Contract') in ['Two year', 'One year']:
+            probability = min(probability, threshold * 0.4)
+
         prediction = int(probability >= threshold)
 
         # 8. Define Risk Level and Confidence relative to threshold
@@ -175,8 +230,19 @@ class PredictionService:
         else:
             confidence = 'Low'
 
-        # 9. Key drivers (Feature Importance contributions for this prediction)
-        coefficients = self.model.coef_[0]
+        # 9. CLV & Priority Action Tier Calculation
+        clv = self.calculate_clv(monthly, tenure)
+        priority_tier = self.get_customer_priority_tier(probability, clv)
+        potential_loss = clv if probability >= threshold else 0.0
+
+        # 10. Key drivers & Instance-level Feature Interpretability Explanation
+        if hasattr(self.model, 'coef_'):
+            coefficients = self.model.coef_[0]
+        elif hasattr(self.model, 'feature_importances_'):
+            coefficients = self.model.feature_importances_
+        else:
+            coefficients = np.zeros(len(self.feature_names))
+
         contributions = {}
         for col, coef in zip(self.feature_names, coefficients):
             val = input_df[col].iloc[0]
@@ -185,8 +251,6 @@ class PredictionService:
                 contributions[col] = float(contrib)
 
         sorted_contributions = dict(sorted(contributions.items(), key=lambda item: abs(item[1]), reverse=True))
-
-        # 10. Instance-level Feature Interpretability Explanation
         explanation_data = explain_customer_prediction(self.model, self.scaler, self.feature_names, input_df)
 
         result = {
@@ -195,6 +259,9 @@ class PredictionService:
             'threshold': threshold,
             'risk_level': risk_level,
             'confidence': confidence,
+            'clv': clv,
+            'potential_loss': potential_loss,
+            'priority_tier': priority_tier,
             'contributions': sorted_contributions,
             'explanation': explanation_data
         }
@@ -276,6 +343,49 @@ class PredictionService:
             'fn': int(fn),
             'tp': int(tp)
         }
+
+    @staticmethod
+    def calculate_clv(monthly_charges: float, tenure: float) -> float:
+        """
+        Calculates expected Customer Lifetime Value (CLV):
+        Baseline CLV = MonthlyCharges * max(tenure, 12) * 1.25
+        """
+        months = max(float(tenure), 12.0)
+        return float(monthly_charges * months * 1.25)
+
+    @staticmethod
+    def get_customer_priority_tier(probability: float, clv: float) -> Dict[str, str]:
+        """
+        Assigns priority intervention tier based on risk probability and Customer Lifetime Value (CLV).
+        """
+        if probability >= 0.35 and clv >= 1200.0:
+            return {
+                'tier': 'Tier 1 - Critical VIP Retention',
+                'color': '#DC2626',
+                'bg': '#FEF2F2',
+                'action': 'Immediate Concierge Retention Call & Custom Loyalty Discount ($15/mo)'
+            }
+        elif probability >= 0.35:
+            return {
+                'tier': 'Tier 2 - High Risk Standard',
+                'color': '#EA580C',
+                'bg': '#FFEDD5',
+                'action': 'Automated In-App Offer & Annual Contract Upgrade Discount'
+            }
+        elif probability >= 0.20:
+            return {
+                'tier': 'Tier 3 - Watchlist Account',
+                'color': '#D97706',
+                'bg': '#FFFBEB',
+                'action': 'Promotional Add-on Bundle (Security / Tech Support 3 Months Free)'
+            }
+        else:
+            return {
+                'tier': 'Tier 4 - Stable Customer',
+                'color': '#0D9488',
+                'bg': '#F0FDF4',
+                'action': 'Standard Monthly Check-in & Loyalty Points Newsletter'
+            }
 
 
 

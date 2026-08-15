@@ -8,15 +8,17 @@ Year: 2026
 import os
 import sys
 
-# Ensure root directory is in python path to resolve 'app' imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-while current_dir and not os.path.exists(os.path.join(current_dir, 'app')):
-    parent = os.path.dirname(current_dir)
-    if parent == current_dir:
+# Ensure project root is in sys.path
+_current = os.path.dirname(os.path.abspath(__file__))
+while _current and _current != os.path.dirname(_current):
+    if os.path.exists(os.path.join(_current, "app")):
+        if _current not in sys.path:
+            sys.path.insert(0, _current)
         break
-    current_dir = parent
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+    _current = os.path.dirname(_current)
+
+from app.utils.bootstrap import ensure_project_root_in_path
+ensure_project_root_in_path()
 
 import streamlit as st
 from app.components.styles import inject_premium_styles
@@ -26,45 +28,50 @@ from app.utils.config import PORTFOLIO_TITLE
 # Set up page configurations
 st.set_page_config(
     page_title=PORTFOLIO_TITLE,
-    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Inject CSS dark-theme styling
+# Inject CSS light-theme styling
 inject_premium_styles()
+
+# Inject security headers via meta tags (Items #18, #19)
+st.markdown(
+    """
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; frame-ancestors 'none';">
+    """,
+    unsafe_allow_html=True
+)
 
 # Define multi-page application routing structure
 home_page = st.Page(
     "home_content.py", 
     title="Home", 
-    icon="🏠", 
     default=True
 )
 predictor_page = st.Page(
     "pages/1_predictor.py", 
-    title="Churn Predictor", 
-    icon="🔮"
+    title="Churn Predictor"
 )
 analytics_page = st.Page(
     "pages/2_analytics.py", 
-    title="Analytics", 
-    icon="📊"
+    title="Analytics"
 )
 model_performance_page = st.Page(
     "pages/3_model_performance.py", 
-    title="Model Performance", 
-    icon="📈"
+    title="Model Performance"
 )
 insights_page = st.Page(
     "pages/4_insights.py", 
-    title="Business Insights", 
-    icon="💡"
+    title="Business Insights"
 )
 admin_page = st.Page(
     "pages/5_admin.py", 
-    title="Admin Console", 
-    icon="🔐"
+    title="Admin Console"
 )
 
 # Set up multi-page navigation

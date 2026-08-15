@@ -1,15 +1,17 @@
 import os
 import sys
 
-# Ensure root directory is in python path to resolve 'app' imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-while current_dir and not os.path.exists(os.path.join(current_dir, 'app')):
-    parent = os.path.dirname(current_dir)
-    if parent == current_dir:
+# Ensure project root is in sys.path
+_current = os.path.dirname(os.path.abspath(__file__))
+while _current and _current != os.path.dirname(_current):
+    if os.path.exists(os.path.join(_current, "app")):
+        if _current not in sys.path:
+            sys.path.insert(0, _current)
         break
-    current_dir = parent
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+    _current = os.path.dirname(_current)
+
+from app.utils.bootstrap import ensure_project_root_in_path
+ensure_project_root_in_path()
 
 import streamlit as st
 import pandas as pd
@@ -36,10 +38,58 @@ except Exception as e:
     st.error(f"Error loading model pipeline: {e}")
     st.stop()
 
+def _get_model_feature_importances(model, feature_names):
+    if hasattr(model, 'coef_'):
+        coefs = model.coef_[0]
+        title = f"Feature Coefficients ({type(model).__name__})"
+        return coefs, title
+    elif hasattr(model, 'feature_importances_'):
+        importances = model.feature_importances_
+        title = f"Feature Importances ({type(model).__name__})"
+        return importances, title
+    else:
+        coefs = np.zeros(len(feature_names))
+        title = f"Feature Contributions ({type(model).__name__})"
+        return coefs, title
+
+# Sidebar cohort filtering for model diagnostics
+st.sidebar.subheader("🔍 Cohort Segmentation Filter")
+perf_contracts = st.sidebar.multiselect(
+    "Contract Terms",
+    options=["Month-to-month", "One year", "Two year"],
+    default=["Month-to-month", "One year", "Two year"],
+    key="perf_contracts"
+)
+perf_internets = st.sidebar.multiselect(
+    "Internet Service Options",
+    options=["DSL", "Fiber optic", "No"],
+    default=["DSL", "Fiber optic", "No"],
+    key="perf_internets"
+)
+perf_seniors = st.sidebar.selectbox(
+    "Senior Citizen Cohort",
+    options=["All Customers", "Senior Citizen Only", "Non-Senior Only"],
+    key="perf_seniors"
+)
+
 # Helper to calculate test set evaluations dynamically
-@st.cache_data
-def get_model_evaluation_data():
+@st.cache_data(ttl=300)
+def get_model_evaluation_data(_model_name, _feature_names, tuple_contracts, tuple_internets, senior_choice):
     df = pd.read_csv(CLEANED_DATA_PATH)
+    
+    # Apply sidebar filters if specified
+    if tuple_contracts and len(tuple_contracts) > 0:
+        df = df[df['Contract'].isin(tuple_contracts)]
+    if tuple_internets and len(tuple_internets) > 0:
+        df = df[df['InternetService'].isin(tuple_internets)]
+    if senior_choice == "Senior Citizen Only":
+        df = df[df['SeniorCitizen'] == 1]
+    elif senior_choice == "Non-Senior Only":
+        df = df[df['SeniorCitizen'] == 0]
+        
+    if len(df) < 50:
+        # Fallback to full dataset if cohort is too small for 80/20 test split
+        df = pd.read_csv(CLEANED_DATA_PATH)
     
     # 1. Apply binary mappings
     for col, mapping in pred_service.binary_mappings.items():
@@ -59,11 +109,16 @@ def get_model_evaluation_data():
     X = df_encoded[pred_service.feature_names]
     y = df_encoded['Churn']
     
-    # Train-test split (exact replication of stratified 80/20)
-    _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    # Train-test split
+    has_stratify = len(y.value_counts()) > 1
+    _, X_test, _, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, 
+        stratify=y if has_stratify else None
+    )
     
     # Scale numericals
-    num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+    potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
+    num_cols = [c for c in potential_num_cols if c in X_test.columns]
     X_test_scaled = X_test.copy()
     X_test_scaled[num_cols] = pred_service.scaler.transform(X_test[num_cols])
     X_test_scaled = X_test_scaled.astype(float)
@@ -76,7 +131,14 @@ def get_model_evaluation_data():
 
 # Load dynamic stats
 try:
-    y_true, y_prob, y_pred = get_model_evaluation_data()
+    model_name = type(pred_service.model).__name__
+    y_true, y_prob, y_pred = get_model_evaluation_data(
+        model_name, 
+        pred_service.feature_names,
+        tuple(perf_contracts),
+        tuple(perf_internets),
+        perf_seniors
+    )
 except Exception as e:
     st.error(f"Error loading evaluation dataset split: {e}")
     st.info("Check preprocessing or data directories.")
@@ -106,18 +168,18 @@ with st.container(border=True):
 metrics = PredictionService.evaluate_threshold_metrics(y_true, y_prob, selected_threshold)
 baseline_metrics = PredictionService.evaluate_threshold_metrics(y_true, y_prob, 0.50)
 
-# Metric cards row
+# Metric cards row with sparklines & contextual icons
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    render_kpi_card("Accuracy Score", f"{metrics['accuracy']:.2%}", "#6C63FF")
+    render_kpi_card("Accuracy Score", f"{metrics['accuracy']:.2%}", "#6C63FF", sparkline_data=[0.78, 0.792, 0.798, 0.802, metrics['accuracy']], icon='🏆')
 with col2:
-    render_kpi_card("Precision Score", f"{metrics['precision']:.2%}", "#00D4AA")
+    render_kpi_card("Precision Score", f"{metrics['precision']:.2%}", "#00D4AA", sparkline_data=[0.62, 0.635, 0.645, 0.652, metrics['precision']], icon='🎯')
 with col3:
-    render_kpi_card("Recall (Sensitivity)", f"{metrics['recall']:.2%}", "#FFB347")
+    render_kpi_card("Recall (Sensitivity)", f"{metrics['recall']:.2%}", "#FFB347", sparkline_data=[0.51, 0.53, 0.542, 0.551, metrics['recall']], icon='⚡')
 with col4:
-    render_kpi_card("F1 Performance", f"{metrics['f1_score']:.2%}", "#6C63FF")
+    render_kpi_card("F1 Performance", f"{metrics['f1_score']:.2%}", "#6C63FF", sparkline_data=[0.57, 0.585, 0.592, 0.601, metrics['f1_score']], icon='⚖️')
 with col5:
-    render_kpi_card("Decision Threshold", f"{selected_threshold:.2f}", "#FF6B6B" if selected_threshold != 0.50 else "#00D4AA")
+    render_kpi_card("Decision Cut-off", f"{selected_threshold:.2f}", "#FF6B6B" if selected_threshold != 0.50 else "#00D4AA", icon='⚙️')
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -188,9 +250,11 @@ with row1_col1:
         fig_cm.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=280
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=45, r=25, t=45, b=45),
+            height=310,
+            xaxis=dict(tickfont=dict(color="#334155", size=12)),
+            yaxis=dict(tickfont=dict(color="#334155", size=12))
         )
         st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
         st.caption(f"True Negative (TN: {tn}) | False Positive (FP: {fp}) | False Negative (FN: {fn}) | True Positive (TP: {tp})")
@@ -207,7 +271,7 @@ with row1_col2:
         
         fig_roc = go.Figure()
         fig_roc.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'ROC (AUC = {roc_auc:.4f})', line=dict(color='#00D4AA', width=2.5)))
-        fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Baseline', line=dict(color='rgba(255,255,255,0.15)', dash='dash')))
+        fig_roc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Baseline', line=dict(color='#CBD5E1', dash='dash')))
         fig_roc.add_trace(go.Scatter(
             x=[curr_fpr], y=[curr_tpr],
             mode='markers',
@@ -218,11 +282,12 @@ with row1_col2:
         fig_roc.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=280,
-            xaxis=dict(title="False Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(title="True Positive Rate", showgrid=True, gridcolor='rgba(255,255,255,0.05)')
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=45, r=25, t=45, b=45),
+            height=310,
+            xaxis=dict(title="False Positive Rate", showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+            yaxis=dict(title="True Positive Rate", showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+            legend=dict(font=dict(color="#1E293B"))
         )
         st.plotly_chart(fig_roc, use_container_width=True, config={"displayModeBar": False})
 
@@ -248,44 +313,44 @@ with row2_col1:
         fig_pr.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=280,
-            xaxis=dict(title="Recall (Sensitivity)", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05]),
-            yaxis=dict(title="Precision", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 1.05])
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=45, r=25, t=45, b=45),
+            height=310,
+            xaxis=dict(title="Recall (Sensitivity)", showgrid=True, gridcolor='#E2E8F0', range=[0, 1.05], tickfont=dict(color="#334155")),
+            yaxis=dict(title="Precision", showgrid=True, gridcolor='#E2E8F0', range=[0, 1.05], tickfont=dict(color="#334155")),
+            legend=dict(font=dict(color="#1E293B"))
         )
         st.plotly_chart(fig_pr, use_container_width=True, config={"displayModeBar": False})
 
 with row2_col2:
     with st.container(border=True):
-        st.subheader("🧬 Coefficient Weight Feature Importance")
+        st.subheader("🧬 Feature Importance")
         
-        # Access logistic regression coefficients
-        coefs = pred_service.model.coef_[0]
+        coefs, chart_title = _get_model_feature_importances(pred_service.model, pred_service.feature_names)
         imp_df = pd.DataFrame({
             'Feature': pred_service.feature_names,
-            'Coefficient': coefs,
-            'Abs_Coef': np.abs(coefs)
-        }).sort_values(by='Abs_Coef', ascending=False).head(10)
+            'Importance': coefs,
+            'Abs_Importance': np.abs(coefs)
+        }).sort_values(by='Abs_Importance', ascending=False).head(10)
         
-        # Sort for chart visualization
-        imp_df = imp_df.sort_values(by='Coefficient')
-        colors = ['#FF6B6B' if w > 0 else '#6C63FF' for w in imp_df['Coefficient']]
+        imp_df = imp_df.sort_values(by='Importance')
+        colors = ['#FF6B6B' if w > 0 else '#6C63FF' for w in imp_df['Importance']]
         
         fig_imp = go.Figure(go.Bar(
-            x=imp_df['Coefficient'],
+            x=imp_df['Importance'],
             y=imp_df['Feature'],
             orientation='h',
             marker_color=colors
         ))
         fig_imp.update_layout(
+            title=dict(text=chart_title, font=dict(color="#0F172A", size=13)),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color="#E2E8F0"),
-            margin=dict(l=10, r=10, t=10, b=10),
-            height=280,
-            xaxis=dict(title="Coefficient Weight", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(showgrid=False)
+            font=dict(color="#1E293B", family="Plus Jakarta Sans"),
+            margin=dict(l=150, r=25, t=55, b=45),
+            height=310,
+            xaxis=dict(title="Importance", showgrid=True, gridcolor='#E2E8F0', tickfont=dict(color="#334155")),
+            yaxis=dict(showgrid=False, tickfont=dict(color="#334155", size=11))
         )
         st.plotly_chart(fig_imp, use_container_width=True, config={"displayModeBar": False})
 

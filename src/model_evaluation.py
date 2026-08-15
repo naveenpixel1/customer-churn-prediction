@@ -130,11 +130,18 @@ def plot_precision_recall_curve(y_test, y_prob):
 
 def plot_feature_importance(model, feature_names):
     """
-    Extracts coefficients from Logistic Regression, 
+    Extracts coefficients or feature importances from the model,
     sorts them by absolute magnitude, and saves a bar chart.
     """
-    # Logistic regression coefficients represent log-odds impact
-    coefficients = model.coef_[0]
+    if hasattr(model, 'coef_'):
+        coefficients = model.coef_[0]
+        chart_title = "Top 15 Feature Importances (Logistic Regression Coefficients)"
+    elif hasattr(model, 'feature_importances_'):
+        coefficients = model.feature_importances_
+        chart_title = f"Top 15 Feature Importances ({type(model).__name__})"
+    else:
+        coefficients = np.zeros(len(feature_names))
+        chart_title = f"Feature Contributions ({type(model).__name__})"
     
     importance_df = pd.DataFrame({
         'Feature': feature_names,
@@ -149,7 +156,7 @@ def plot_feature_importance(model, feature_names):
     
     sns.barplot(data=top_importance, x='Coefficient', y='Feature', palette=colors, hue='Feature', legend=False)
     plt.axvline(0, color='black', lw=1, linestyle='--')
-    plt.title("Top 15 Feature Importances (Logistic Regression Coefficients)")
+    plt.title(chart_title)
     plt.xlabel("Coefficient Value (Positive drives Churn, Negative retains Customer)")
     plt.ylabel("Features")
     plt.tight_layout()
@@ -246,7 +253,8 @@ def main():
     _, X_test, _, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
     
     # Scale test features (transform only)
-    num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+    potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
+    num_cols = [c for c in potential_num_cols if c in X_test.columns]
     X_test_scaled = X_test.copy()
     X_test_scaled[num_cols] = scaler.transform(X_test[num_cols])
     X_test_scaled = X_test_scaled.astype(float)
