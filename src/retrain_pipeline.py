@@ -30,9 +30,9 @@ def run_retraining_pipeline() -> Dict[str, Any]:
     """
     logger.info("--- Starting Automated Retraining Pipeline ---")
     
-    raw_path = os.path.join("data", "raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
-    processed_path = os.path.join("data", "processed", "churn_cleaned.csv")
-    model_dir = "models"
+    raw_path = os.path.join(project_root, "data", "raw", "WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    processed_path = os.path.join(project_root, "data", "processed", "churn_cleaned.csv")
+    model_dir = os.path.join(project_root, "models")
     os.makedirs(model_dir, exist_ok=True)
     
     # 1. Load and Clean Raw Data
@@ -40,7 +40,7 @@ def run_retraining_pipeline() -> Dict[str, Any]:
     df_cleaned = clean_data(df_raw)
     
     # 2. Merge History Logs if available
-    history_path = os.path.join("data", "history.csv")
+    history_path = os.path.join(project_root, "data", "history.csv")
     if os.path.exists(history_path):
         try:
             df_hist = pd.read_csv(history_path)

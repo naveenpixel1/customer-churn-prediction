@@ -149,6 +149,9 @@ except Exception as e:
 if 'decision_threshold' not in st.session_state:
     st.session_state['decision_threshold'] = 0.35
 
+raw_thresh = float(st.session_state['decision_threshold'])
+clamped_thresh = max(0.10, min(0.90, round(raw_thresh, 2)))
+
 with st.container(border=True):
     st.subheader("⚙️ Interactive Decision Threshold Optimization")
     st.markdown(
@@ -159,8 +162,9 @@ with st.container(border=True):
         "Decision Threshold Cut-off",
         min_value=0.10,
         max_value=0.90,
-        value=float(st.session_state['decision_threshold']),
-        step=0.05,
+        value=clamped_thresh,
+        step=0.01,
+        key="performance_decision_threshold_slider",
         help="Customers with a predicted churn probability >= this threshold are classified as Churners."
     )
     st.session_state['decision_threshold'] = selected_threshold

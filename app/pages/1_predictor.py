@@ -36,25 +36,10 @@ from app.services.prediction_service import PredictionService
 from app.utils.security import validate_prediction_input, sanitize_html
 from app.utils.currency import format_currency, get_currency_symbol
 
-@st.cache_resource
-def load_ml_pipeline() -> Tuple[Any, Any, Any, Dict[str, Any]]:
-    model_path = os.path.join('models', 'model.pkl')
-    scaler_path = os.path.join('models', 'scaler.pkl')
-    features_path = os.path.join('models', 'feature_names.pkl')
-    encoder_path = os.path.join('models', 'label_encoder.pkl')
-    if not (os.path.exists(model_path) and os.path.exists(scaler_path)):
-        raise FileNotFoundError("Model serialization files missing in models/ directory.")
-    model = joblib.load(model_path)
-    scaler = joblib.load(scaler_path)
-    feature_names = joblib.load(features_path)
-    binary_mappings = joblib.load(encoder_path)
-    return model, scaler, feature_names, binary_mappings
-
 st.markdown("<h1 class='glowing-title gradient-text'>Account Health Dashboard</h1>", unsafe_allow_html=True)
 st.markdown('<p style="font-size: 15px; color: #64748B; margin-top: -8px; margin-bottom: 24px;">Monitor customer churn probability, analyze risk drivers, and simulate retention offer levers in real time.</p>', unsafe_allow_html=True)
 
 try:
-    model, scaler, feature_names, binary_mappings = load_ml_pipeline()
     history_logger = HistoryService()
     pred_service = PredictionService()
 except Exception as e:

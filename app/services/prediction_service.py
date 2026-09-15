@@ -197,9 +197,12 @@ class PredictionService:
         # 5. Reindex columns using saved feature names layout
         input_df = input_df.reindex(columns=self.feature_names, fill_value=0)
 
-        # 6. Scale Numerical features
-        potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
-        num_cols = [c for c in potential_num_cols if c in input_df.columns]
+        # 6. Scale Numerical features safely using fitted scaler metadata
+        if hasattr(self.scaler, 'feature_names_in_'):
+            num_cols = [c for c in self.scaler.feature_names_in_ if c in input_df.columns]
+        else:
+            potential_num_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Tenure_To_Monthly_Ratio', 'TotalCharges_Per_Month', 'Service_Count']
+            num_cols = [c for c in potential_num_cols if c in input_df.columns]
         input_df[num_cols] = self.scaler.transform(input_df[num_cols])
         input_df = input_df.astype(float)
 
