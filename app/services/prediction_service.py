@@ -5,7 +5,14 @@ import numpy as np
 import streamlit as st
 import logging
 from typing import Dict, Any, Tuple
-from app.utils.config import MODEL_DIR
+from app.utils.config import (
+    MODEL_DIR,
+    PIPELINE_JOBLIB_PATH,
+    MODEL_PKL_PATH,
+    SCALER_PKL_PATH,
+    FEATURES_PKL_PATH,
+    ENCODER_PKL_PATH
+)
 from app.utils.security import validate_prediction_input
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
@@ -135,12 +142,28 @@ class PredictionService:
     @classmethod
     @st.cache_resource
     def load_pipeline(cls) -> Tuple[Any, Any, Any, Dict[str, Any]]:
+        # 1. Attempt loading bundled joblib pipeline if available
+        if PIPELINE_JOBLIB_PATH.exists():
+            try:
+                bundle = joblib.load(PIPELINE_JOBLIB_PATH)
+                if isinstance(bundle, dict) and 'model' in bundle and 'scaler' in bundle:
+                    logger.info(f'Successfully loaded bundled ML model pipeline from: {PIPELINE_JOBLIB_PATH}')
+                    return (
+                        bundle['model'],
+                        bundle['scaler'],
+                        bundle.get('features', bundle.get('feature_names')),
+                        bundle.get('binary_mappings', {})
+                    )
+            except Exception as e:
+                logger.warning(f'Could not load bundled joblib pipeline: {e}. Falling back to individual .pkl files.')
+
+        # 2. Fallback to individual serialized .pkl assets
         try:
-            model = joblib.load(os.path.join(MODEL_DIR, 'model.pkl'))
-            scaler = joblib.load(os.path.join(MODEL_DIR, 'scaler.pkl'))
-            feature_names = joblib.load(os.path.join(MODEL_DIR, 'feature_names.pkl'))
-            binary_mappings = joblib.load(os.path.join(MODEL_DIR, 'label_encoder.pkl'))
-            logger.info('Successfully loaded ML model pipeline assets from disk.')
+            model = joblib.load(MODEL_PKL_PATH)
+            scaler = joblib.load(SCALER_PKL_PATH)
+            feature_names = joblib.load(FEATURES_PKL_PATH)
+            binary_mappings = joblib.load(ENCODER_PKL_PATH)
+            logger.info('Successfully loaded ML model pipeline assets from individual .pkl files.')
             return model, scaler, feature_names, binary_mappings
         except Exception as e:
             logger.error(f'Error loading model pipeline: {e}')

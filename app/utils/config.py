@@ -11,6 +11,11 @@ FIGURES_DIR = REPORTS_DIR / 'figures'
 HISTORY_FILE = DATA_DIR / 'history.csv'
 CLEANED_DATA_PATH = DATA_DIR / 'processed' / 'churn_cleaned.csv'
 RAW_DATA_PATH = DATA_DIR / 'raw' / 'WA_Fn-UseC_-Telco-Customer-Churn.csv'
+PIPELINE_JOBLIB_PATH = MODEL_DIR / 'churn_model_pipeline.joblib'
+MODEL_PKL_PATH = MODEL_DIR / 'model.pkl'
+SCALER_PKL_PATH = MODEL_DIR / 'scaler.pkl'
+FEATURES_PKL_PATH = MODEL_DIR / 'feature_names.pkl'
+ENCODER_PKL_PATH = MODEL_DIR / 'label_encoder.pkl'
 
 def _load_model_metrics():
     metrics_file = MODEL_DIR / "metrics.json"

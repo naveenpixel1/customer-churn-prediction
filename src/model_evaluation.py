@@ -19,23 +19,40 @@ from sklearn.metrics import (
     roc_auc_score
 )
 
-# Configuration directories
-MODEL_DIR = "models"
-EVAL_DIR = os.path.join("reports", "evaluation")
-os.makedirs(EVAL_DIR, exist_ok=True)
+from pathlib import Path
+
+# Configuration directories dynamically resolved relative to repository root
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
+EVAL_DIR = BASE_DIR / "reports" / "evaluation"
+EVAL_DIR.mkdir(parents=True, exist_ok=True)
+PIPELINE_PATH = MODEL_DIR / "churn_model_pipeline.joblib"
 
 # Use professional styling
 sns.set_theme(style="whitegrid")
 
 def load_evaluation_components():
-    """Loads the model, scaler, feature layout, and label encoders."""
-    model_path = os.path.join(MODEL_DIR, "model.pkl")
-    scaler_path = os.path.join(MODEL_DIR, "scaler.pkl")
-    features_path = os.path.join(MODEL_DIR, "feature_names.pkl")
-    mappings_path = os.path.join(MODEL_DIR, "label_encoder.pkl")
+    """Loads the model, scaler, feature layout, and label encoders dynamically."""
+    if PIPELINE_PATH.exists():
+        try:
+            bundle = joblib.load(PIPELINE_PATH)
+            if isinstance(bundle, dict) and "model" in bundle and "scaler" in bundle:
+                return (
+                    bundle["model"],
+                    bundle["scaler"],
+                    bundle.get("features", bundle.get("feature_names")),
+                    bundle.get("binary_mappings", {}),
+                )
+        except Exception:
+            pass
+
+    model_path = MODEL_DIR / "model.pkl"
+    scaler_path = MODEL_DIR / "scaler.pkl"
+    features_path = MODEL_DIR / "feature_names.pkl"
+    mappings_path = MODEL_DIR / "label_encoder.pkl"
     
     for path in [model_path, scaler_path, features_path, mappings_path]:
-        if not os.path.exists(path):
+        if not path.exists():
             raise FileNotFoundError(f"Component not found: {path}. Run src/model_training.py first.")
             
     model = joblib.load(model_path)
@@ -239,7 +256,7 @@ def print_final_summary(acc, prec, rec, f1, roc_auc):
     print("#"*50)
 
 def main():
-    processed_path = os.path.join("data", "processed", "churn_cleaned.csv")
+    processed_path = BASE_DIR / "data" / "processed" / "churn_cleaned.csv"
     print(f"Loading cleaned dataset for evaluation: {processed_path}")
     df = pd.read_csv(processed_path)
     

@@ -53,3 +53,16 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+# Logs & Temporary Caches
+*.log
+logs/
+.pytest_cache/
+.coverage
+htmlcov/
+scratch/
+
+# Node & Package Managers
+node_modules/
+.npm/
+.pnpm-store/
